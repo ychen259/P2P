@@ -11,9 +11,9 @@ public class Utilities {
   /*result[3] = 0000 0000*/
   static public byte[] intToByteArray(int i){
     byte[] result = new byte[4];
-    result[0] = (byte)(i >> 24);
-    result[1] = (byte)(i >> 16);
-    result[2] = (byte)(i >> 8);
+    result[0] = (byte)(i >>> 24);
+    result[1] = (byte)(i >>> 16);
+    result[2] = (byte)(i >>> 8);
     result[3] = (byte)(i);
 
     return result;
@@ -30,6 +30,35 @@ public class Utilities {
   	int result = 0;
     ByteBuffer wrapped = ByteBuffer.wrap(value);
     result = wrapped.getInt();
+    return result;
+  }
+
+  /*if bitfield is 0010 1001
+                   1100 0101
+    and pieceIndex = 10
+
+    Output: bitfield is 0010 1001
+                        1110 0101*/
+  static public void setBitInBitfield(byte[] bitfield, int pieceIndex){
+    int row = pieceIndex/8;
+    int column = pieceIndex %8 ;
+    int position = 7 - column;
+    byte flag = (byte)(1 << position);
+    bitfield[row] |= flag;
+  }
+
+  /*if bitfield is 0010 1001
+                   1100 0101
+    and pieceIndex = 10
+
+    Output:  false (because bitfield[10] != 1)*/
+  static public boolean isSetBitInBitfield(byte[] bitfield, int pieceIndex){
+    boolean result;
+    int row = pieceIndex/8;
+    int column = pieceIndex %8 ;
+    int position = 7 - column;
+    byte flag = (byte)(1 << position);
+    result = ((bitfield[row] & flag) != 0);
     return result;
   }
 
