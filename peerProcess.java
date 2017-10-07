@@ -11,14 +11,16 @@
 import java.io.*;
 import java.util.*;
 import java.util.logging.*;
+import java.net.*;
 /*
  * The StartRemotePeers class b PeerInfo.cfg and starts remote peer processes.
  * You must modify this program a little bit if your peer processes are written in C or C++.
  * Please look at the lines below the comment saying IMPORTANT.
  */
-public class peerProcess extends Thread {
+public class peerProcess {
     /*My own Info*/
     int peerId; //my peerID
+    int port;  //my port number
     int numberOfPiece;
     Map<Integer,Boolean> isInterested = new HashMap<Integer, Boolean>(); //the neighbor I am interested in
                                                                         // Integer: peerID || Boolean: true(interested)
@@ -35,6 +37,10 @@ public class peerProcess extends Thread {
     Map<Integer,byte[]> bitfieldArray = new HashMap<Integer, byte[]>(); // neighbor's bitfield
                                                                             //Integer：peerID || byte[]: bitfield
 
+    Map<Integer, Integer> downloadRate = new HashMap<Integer, Integer>(); //My downloading rate for neighbors
+
+    Map<Integer, Socket> neighborSocket = new HashMap<Integer, Socket>();//neighbor's socket
+    																	 //Integer: peerID || Socket: their socket
 
     public peerProcess(int peerId){
     	this.peerId = peerId;
@@ -53,14 +59,19 @@ public class peerProcess extends Thread {
         /*store all my neighbor Info into isChoke and isInterested except myself*/
         /*the default vallue for isChoke is true*/
         /*the default value for isInterested is false*/
+        /*default value for downloadRate is 0*/
+
     	for(int i = 0; i < peerInfoArray.size(); i++){
     		int id = Integer.parseInt(peerInfoArray.get(i).peerId);
-    		if(this.peerId == id) continue;
+    		if(this.peerId == id){ 
+    			port = Integer.parseInt(peerInfoArray.get(i).peerPort);
+    			continue;
+    		}
     		else{
     			NeighborPeerInfo.add(peerInfoArray.get(i));  /*add new value into NeighborPeerInfo*/
-
     			isChoke.put(id, true); /*add new value into isChoke*/
     			isInterested.put(id, false); /*add new value into isInterested*/
+    			downloadRate.put(id, 0); /*set initial download rate to 0*/
     		}
     	}
 
@@ -89,11 +100,57 @@ public class peerProcess extends Thread {
             bitfieldArray.put(id, empty);
           }
     	}
+
+    }
+
+    public void buildSocket() throws IOException{
+      ServerSocket serverSocket = new ServerSocket(port);
+
+      for(int i = 0; i < NeighborPeerInfo.size(); i++){
+      	int neighborId = Integer.parseInt(NeighborPeerInfo.get(i).peerId);
+      	String neighborHost = NeighborPeerInfo.get(i).peerAddress;
+      	int neighborPort = Integer.parseInt(NeighborPeerInfo.get(i).peerPort);
+   
+        /*the peer process with peer ID 1003 in the above example should 
+          make TCP connections to the peer processes with peer ID 1001 and peer ID 1002. In 
+          the same way, the peer process with peer ID 1004 should make TCP connections to the 
+          peer processes with peer ID 1001, 1002, and 1003.*/
+
+        /*If my Id greater than neighbor ID, then I send TCP connection to them;*/
+        /*else I will wait to them to send a TCP connection to me*/
+        if(peerId > neighborId){
+        	try{
+               Socket socket = new Socket(neighborHost, neighborPort);
+               neighborSocket.put(neighborId, socket);
+               //System.out.println(socket);
+               System.out.println("peer ID: " + peerId + " send TCP request to peerId: " + neighborId);
+            }
+            catch(Exception e){
+            	System.out.println(e);
+            }
+        }
+        else{
+        	try{
+              Socket socket = serverSocket.accept();
+              neighborSocket.put(neighborId, socket);
+              //System.out.println(socket);
+              System.out.println("peer ID: " + peerId + " listen to " + port);
+            }
+            catch(Exception e){
+            	System.out.println(e);
+            }            
+        }
+      }
+      
     }
 
     /*test My constructor*/
-	public static void main(String[] args){
-        peerProcess test = new peerProcess(1002);
+	public static void main(String[] args) throws IOException{
+		/**************************Test Code**********************************************************************/
+		int id = Integer.parseInt(args[0]);
+        peerProcess test = new peerProcess(id);
+        test.buildSocket();
+
         int size = test.NeighborPeerInfo.size();
 
         System.out.println("\nNeighbor info");
@@ -106,28 +163,41 @@ public class peerProcess extends Thread {
 
         System.out.println("\nisChoke info");
         for(Map.Entry<Integer,Boolean> entry : test.isChoke.entrySet()){
-          System.out.println(test.peerId + "  isChoke for " + entry.getKey() + ": " + entry.getValue());
+          System.out.println("My Id: " + test.peerId + "  is Choked for " + entry.getKey() + ": " + entry.getValue());
 
         }
 
         System.out.println("\nisInterested info");
         for(Map.Entry<Integer,Boolean> entry : test.isInterested.entrySet()){
-          System.out.println(test.peerId + "  isInterested for " + entry.getKey() + ": " + entry.getValue());
+          System.out.println("My Id: " + test.peerId + "  is Interested in " + entry.getKey() + ": " + entry.getValue());
         }
+
+        System.out.println("\nDownload info");
+        for(Map.Entry<Integer,Integer> entry : test.downloadRate.entrySet()){
+          System.out.println("My Id: " + test.peerId + "  download Rate from peer " + entry.getKey() + ": " + entry.getValue());
+        }
+
+        System.out.println("\nneighborSocket info");
+        for(Map.Entry<Integer,Socket> entry : test.neighborSocket.entrySet()){
+          System.out.println("My Id: " + test.peerId + "  neighbor Socket from peer " + entry.getKey() + ": " + entry.getValue());
+        }
+        
 
         int numberOfPiece = test.numberOfPiece;
         int peerId = test.peerId;
+        int port = test.port;
         int sizeOfBitfield = ((test.numberOfPiece % 8) == 0? numberOfPiece/8: numberOfPiece/8 + 1 );
-
+        
         System.out.println("\nnumber of piece = " + numberOfPiece);
         System.out.println("peer ID = " + peerId);
+        System.out.println("port = " + port);
         System.out.println("\nBitfield info");
         for(Map.Entry<Integer,byte[]> entry : test.bitfieldArray.entrySet()){
           System.out.print("Bitfield for " + entry.getKey() + ": ");
           for(int i = 0; i < sizeOfBitfield; i++){
             System.out.print(entry.getValue()[i] + " ");
           }
-          System.out.println();
+          System.out.println("\n");
         }
 
         byte[] value = test.bitfieldArray.get(1000);
@@ -135,5 +205,8 @@ public class peerProcess extends Thread {
           boolean result = Utilities.isSetBitInBitfield(value, i);
           System.out.println("piece " + i + " is set: " + result);
         }
+
+		/**************************Test Code End Here**********************************************************************/
+
     }
 }
