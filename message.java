@@ -3,7 +3,7 @@ import java.util.*;
 
 public class message {  
   byte[] msgLen = new byte[4];
-  byte msgType;
+  byte[] msgType = new byte[1];
   byte[] payload; 
 
   static byte choke = 0;
@@ -24,7 +24,7 @@ public class message {
   static public message choke(){
   	message result = new message();
     result.msgLen = Utilities.intToByteArray(1);  /*only Msg Type and without payload*/
-    result.msgType = choke;
+    result.msgType[0] = choke;
     return result;
   }
 
@@ -32,7 +32,7 @@ public class message {
   static public message unchoke(){
   	message result = new message();
     result.msgLen = Utilities.intToByteArray(1);  /*only Msg Type and without payload*/
-    result.msgType = unchoke;
+    result.msgType[0] = unchoke;
 
     return result;
   }
@@ -41,7 +41,7 @@ public class message {
   static public message interested(){
   	message result = new message();
     result.msgLen = Utilities.intToByteArray(1);  /*only Msg Type and without payload*/
-    result.msgType = interested;
+    result.msgType[0] = interested;
 
     return result;
   }
@@ -50,7 +50,7 @@ public class message {
   static public message notInterested(){
   	message result = new message();
     result.msgLen = Utilities.intToByteArray(1);  /*only Msg Type and without payload*/
-    result.msgType = notInterested;
+    result.msgType[0] = notInterested;
 
     return result;
   }
@@ -59,7 +59,7 @@ public class message {
   static public message have(int pieceIndex){
   	message result = new message();
     result.msgLen = Utilities.intToByteArray(1+4);  /*Msg type(1) + pieceIndex(4)*/
-    result.msgType = have;
+    result.msgType[0] = have;
     result.payload = Utilities.intToByteArray(pieceIndex);
     return result;
   }
@@ -69,7 +69,7 @@ public class message {
   	int lenOfbitfields = bitfields.length;
   	message result = new message();
     result.msgLen = Utilities.intToByteArray(1 + lenOfbitfields);  /*Msg type(1) + size of bitfields*/
-    result.msgType = bitfield;
+    result.msgType[0] = bitfield;
     result.payload = bitfields;
     return result;
   }
@@ -78,7 +78,7 @@ public class message {
   static public message request(int pieceIndex){
   	message result = new message();
     result.msgLen = Utilities.intToByteArray(1+4);  /*Msg type(1) + pieceIndex(4)*/
-    result.msgType = request;
+    result.msgType[0] = request;
     result.payload = Utilities.intToByteArray(pieceIndex);
     return result;
   }
@@ -88,7 +88,7 @@ public class message {
   	int lengthOfpieces = pieces.length;
   	message result = new message();
     result.msgLen = Utilities.intToByteArray(1+4+lengthOfpieces);  /*Msg type(1) + pieceIndex(4)*/
-    result.msgType = piece;
+    result.msgType[0] = piece;
 
     byte[] index = new byte[4];
     index = Utilities.intToByteArray(pieceIndex);

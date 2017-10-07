@@ -62,6 +62,17 @@ public class Utilities {
     return result;
   }
 
+  /*combine two array together*/
+  /*Ex. byte [] a = new byte[]{'a', 'b'};
+        byte [] b = new byte[]{'c', 'd'}
+    Output: combined = new byte[]{'a', 'b', 'c', 'd'};*/
+  static public byte[] combineByteArray(byte[] a, byte[] b){
+    byte[] combined = new byte[a.length + b.length];
+    System.arraycopy(a, 0, combined, 0         ,a.length);
+    System.arraycopy(b, 0, combined, a.length, b.length);
+    return combined;
+  }
+
   /*For testing*/
   static public void printByteArray(byte[] value){
   	if(value == null){

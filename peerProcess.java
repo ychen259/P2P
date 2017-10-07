@@ -33,14 +33,15 @@ public class peerProcess {
     Map<Integer,Boolean> isChoke = new HashMap<Integer, Boolean>();  //the neighbor send me choke message
                                                                      // Integer: peerID || Boolean: true(choke)    
 
-    /*Everyone's bitfield*/
-    Map<Integer,byte[]> bitfieldArray = new HashMap<Integer, byte[]>(); // neighbor's bitfield
-                                                                            //Integer：peerID || byte[]: bitfield
-
     Map<Integer, Integer> downloadRate = new HashMap<Integer, Integer>(); //My downloading rate for neighbors
 
     Map<Integer, Socket> neighborSocket = new HashMap<Integer, Socket>();//neighbor's socket
     																	 //Integer: peerID || Socket: their socket
+
+    /*Everyone's bitfield (including myself)*/
+    Map<Integer,byte[]> bitfieldMap = new HashMap<Integer, byte[]>(); // Everyone's bitfield
+                                                                      //Integer：peerID || byte[]: bitfield
+
 
     public peerProcess(int peerId){
     	this.peerId = peerId;
@@ -89,7 +90,7 @@ public class peerProcess {
                 Utilities.setBitInBitfield(full, j); 
           	}
 
-            bitfieldArray.put(id, full);
+            bitfieldMap.put(id, full);
           }  
           else{
             byte [] empty = new byte[sizeOfbitfield];
@@ -97,49 +98,56 @@ public class peerProcess {
                 empty[j] = (byte)0x00; /*full[j] = 0000 0000*/
             }
 
-            bitfieldArray.put(id, empty);
+            bitfieldMap.put(id, empty);
           }
     	}
 
     }
 
-    public void buildSocket() throws IOException{
-      ServerSocket serverSocket = new ServerSocket(port);
+    /*build up socket between peers
+    Ex. peer 1000 need to build socket with all its neighbor socket*/
+    public void buildSocket()  {
+      try{
+        ServerSocket serverSocket = new ServerSocket(port);
 
-      for(int i = 0; i < NeighborPeerInfo.size(); i++){
-      	int neighborId = Integer.parseInt(NeighborPeerInfo.get(i).peerId);
-      	String neighborHost = NeighborPeerInfo.get(i).peerAddress;
-      	int neighborPort = Integer.parseInt(NeighborPeerInfo.get(i).peerPort);
+        for(int i = 0; i < NeighborPeerInfo.size(); i++){
+        	int neighborId = Integer.parseInt(NeighborPeerInfo.get(i).peerId);
+      	  String neighborHost = NeighborPeerInfo.get(i).peerAddress;
+      	  int neighborPort = Integer.parseInt(NeighborPeerInfo.get(i).peerPort);
    
-        /*the peer process with peer ID 1003 in the above example should 
-          make TCP connections to the peer processes with peer ID 1001 and peer ID 1002. In 
-          the same way, the peer process with peer ID 1004 should make TCP connections to the 
-          peer processes with peer ID 1001, 1002, and 1003.*/
+          /*the peer process with peer ID 1003 in the above example should 
+            make TCP connections to the peer processes with peer ID 1001 and peer ID 1002. In 
+            the same way, the peer process with peer ID 1004 should make TCP connections to the 
+            peer processes with peer ID 1001, 1002, and 1003.*/
 
-        /*If my Id greater than neighbor ID, then I send TCP connection to them;*/
-        /*else I will wait to them to send a TCP connection to me*/
-        if(peerId > neighborId){
-        	try{
-               Socket socket = new Socket(neighborHost, neighborPort);
-               neighborSocket.put(neighborId, socket);
-               //System.out.println(socket);
-               System.out.println("peer ID: " + peerId + " send TCP request to peerId: " + neighborId);
+          /*If my Id greater than neighbor ID, then I send TCP connection to them;*/
+          /*else I will wait to them to send a TCP connection to me*/
+          if(peerId > neighborId){
+        	  try{
+                 Socket socket = new Socket(neighborHost, neighborPort);
+                 neighborSocket.put(neighborId, socket);
+                 //System.out.println(socket);
+                 System.out.println("peer ID: " + peerId + " send TCP request to peerId: " + neighborId);
             }
             catch(Exception e){
             	System.out.println(e);
             }
-        }
-        else{
-        	try{
-              Socket socket = serverSocket.accept();
-              neighborSocket.put(neighborId, socket);
-              //System.out.println(socket);
-              System.out.println("peer ID: " + peerId + " listen to " + port);
-            }
+          }
+          else{
+        	  try{
+                Socket socket = serverSocket.accept();
+                neighborSocket.put(neighborId, socket);
+                //System.out.println(socket);
+                System.out.println("peer ID: " + peerId + " listen to " + port);
+              }
             catch(Exception e){
             	System.out.println(e);
             }            
+          }  
         }
+      }
+      catch(Exception e){
+        System.out.println(e);
       }
       
     }
@@ -147,9 +155,10 @@ public class peerProcess {
     /*test My constructor*/
 	public static void main(String[] args) throws IOException{
 		/**************************Test Code**********************************************************************/
+    /*
 		int id = Integer.parseInt(args[0]);
         peerProcess test = new peerProcess(id);
-        test.buildSocket();
+       // test.buildSocket();
 
         int size = test.NeighborPeerInfo.size();
 
@@ -192,7 +201,7 @@ public class peerProcess {
         System.out.println("peer ID = " + peerId);
         System.out.println("port = " + port);
         System.out.println("\nBitfield info");
-        for(Map.Entry<Integer,byte[]> entry : test.bitfieldArray.entrySet()){
+        for(Map.Entry<Integer,byte[]> entry : test.bitfieldMap.entrySet()){
           System.out.print("Bitfield for " + entry.getKey() + ": ");
           for(int i = 0; i < sizeOfBitfield; i++){
             System.out.print(entry.getValue()[i] + " ");
@@ -200,11 +209,17 @@ public class peerProcess {
           System.out.println("\n");
         }
 
-        byte[] value = test.bitfieldArray.get(1000);
+        byte[] value = test.bitfieldMap.get(1000);
         for(int i = 0; i < numberOfPiece; i++){
           boolean result = Utilities.isSetBitInBitfield(value, i);
           System.out.println("piece " + i + " is set: " + result);
         }
+      */
+
+     Thread peer1000 = new Thread(new Handler(1000));
+     Thread peer1001 = new Thread(new Handler(1001));
+     peer1000.start();
+     peer1001.start();
 
 		/**************************Test Code End Here**********************************************************************/
 
