@@ -22,8 +22,6 @@ public class peerProcess {
     int peerId; //my peerID
     int port;  //my port number
     int numberOfPiece;
-    Map<Integer,Boolean> isInterested = new HashMap<Integer, Boolean>(); //the neighbor I am interested in
-                                                                        // Integer: peerID || Boolean: true(interested)
 
     /*neighbor Info*/
     List<RemotePeerInfo> NeighborPeerInfo = new ArrayList<RemotePeerInfo>();  //store all its neighbor info
@@ -33,10 +31,14 @@ public class peerProcess {
     Map<Integer,Boolean> isChoke = new HashMap<Integer, Boolean>();  //the neighbor send me choke message
                                                                      // Integer: peerID || Boolean: true(choke)    
 
+
+    Map<Integer,Boolean> isInterested = new HashMap<Integer, Boolean>(); //neighbor who is interested in my pieces (send me a interesting message)
+                                                                        // Integer: peerID || Boolean: true(interested)
+
     Map<Integer, Integer> downloadRate = new HashMap<Integer, Integer>(); //My downloading rate for neighbors
 
     Map<Integer, Socket> neighborSocket = new HashMap<Integer, Socket>();//neighbor's socket
-    																	 //Integer: peerID || Socket: their socket
+    																	                                   //Integer: peerID || Socket: their socket
 
     /*Everyone's bitfield (including myself)*/
     Map<Integer,byte[]> bitfieldMap = new HashMap<Integer, byte[]>(); // Everyone's bitfield
@@ -81,9 +83,11 @@ public class peerProcess {
 
         /*set the bitfield to all one if the peer has complete file*/
         /*set the bitfield to all zero if the peer has not file*/
+        /*After I set up the bitfield of my own, I break out the loop, because I dont want to set up someone else bitfield*/
+        /*If I want to set up someone's bitfield, I need to receive bitfield message*/
     	for(int i = 0; i < peerInfoArray.size(); i++){
           int id = Integer.parseInt(peerInfoArray.get(i).peerId);
-          if(peerInfoArray.get(i).haveFile == true){
+          if(peerInfoArray.get(i).haveFile == true && id == peerId){
           	byte [] full = new byte[sizeOfbitfield];
             /*set bitfield to all one*/
           	for(int j = 0; j < numberOfPiece; j++){
@@ -91,14 +95,16 @@ public class peerProcess {
           	}
 
             bitfieldMap.put(id, full);
+            break;
           }  
-          else{
+          else if(peerInfoArray.get(i).haveFile == false && id == peerId){
             byte [] empty = new byte[sizeOfbitfield];
             for(int j = 0; j < sizeOfbitfield; j++){
                 empty[j] = (byte)0x00; /*full[j] = 0000 0000*/
             }
 
             bitfieldMap.put(id, empty);
+            break;
           }
     	}
 
@@ -134,11 +140,11 @@ public class peerProcess {
             }
           }
           else{
+              //System.out.println("peer ID: " + peerId + " listen to " + port);
         	  try{
                 Socket socket = serverSocket.accept();
                 neighborSocket.put(neighborId, socket);
                 //System.out.println(socket);
-                System.out.println("peer ID: " + peerId + " listen to " + port);
               }
             catch(Exception e){
             	System.out.println(e);
@@ -216,10 +222,12 @@ public class peerProcess {
         }
       */
 
-     Thread peer1000 = new Thread(new Handler(1000));
-     Thread peer1001 = new Thread(new Handler(1001));
+     Thread peer1000 = new Thread(new SocketHandler(1000));
+     Thread peer1001 = new Thread(new SocketHandler(1001));
+     Thread peer1002 = new Thread(new SocketHandler(1002));
      peer1000.start();
      peer1001.start();
+     peer1002.start();
 
 		/**************************Test Code End Here**********************************************************************/
 

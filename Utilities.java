@@ -83,7 +83,7 @@ public class Utilities {
     int i=0;
     System.out.print("Msg payload:  ");
     for(i=0; i < length; i++){
-      System.out.print((byte)value[i] + " ");
+      System.out.print((char)value[i] + " ");
     }
     System.out.println();
   }
