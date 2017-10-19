@@ -13,6 +13,9 @@ public class SocketHandler implements Runnable {
   ObjectOutputStream out;         //stream write to the socket
  	ObjectInputStream in;
 
+  List<ObjectOutputStream> allOutStream = new ArrayList<ObjectOutputStream>();  /*store all output stream*/
+                                                                                /*I need this to send have message to all neighbors*/
+
 	public SocketHandler(int peerId){
 	  this.peer = new peerProcess(peerId);
 	}
@@ -45,7 +48,7 @@ public class SocketHandler implements Runnable {
           out = new ObjectOutputStream(socket.getOutputStream());
 		      out.flush();
 		      in = new ObjectInputStream(socket.getInputStream());
- 
+          allOutStream.add(out); /*store all output steam*/
          /******************************************Send and receive Handshake********************************************/
 
 		      /*convert handshake object to 32 byte array*/
@@ -76,7 +79,7 @@ public class SocketHandler implements Runnable {
 //          }
 
           /*****************************************Receive all kinds of message********************************************/
-          Thread receiveHandler = new Thread(new ReceiveHandler(peer, neighborId, in, out));
+          Thread receiveHandler = new Thread(new ReceiveHandler(peer, neighborId, in, out, allOutStream));
           receiveHandler.start();
         }
         catch(Exception e){

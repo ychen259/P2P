@@ -73,6 +73,38 @@ public class Utilities {
     return combined;
   }
 
+  /*Read byte from (pieceSize*indexOfPiecce) to [(pieceSize*indexOfPiecce) + pieceSize] from file*/
+  /*(pieceSize*indexOfPiecce) to [(pieceSize*indexOfPiecce) + pieceSize] == read a piece from file*/
+  static public byte[] readPieceFromFile(String filename, int pieceSize, int indexOfPiece){
+
+    byte [] result = new byte[pieceSize];
+      
+    try{
+      RandomAccessFile rf = new RandomAccessFile(filename, "r");
+      rf.seek(pieceSize * indexOfPiece);
+      rf.read(result);
+
+    }catch(Exception e){
+        System.out.println(e);
+    }
+    
+    return result;
+  } 
+
+
+  /*Write data[] into file in particular position (start from pieceSize*indexOfPiece) */
+  static public void writePieceFromFile(String filename, int pieceSize, int indexOfPiece, byte[] data){
+    try{
+      RandomAccessFile rf = new RandomAccessFile(filename, "rw");
+      rf.seek(pieceSize * indexOfPiece);
+      rf.write(data);
+
+    }catch(Exception e){
+      System.out.println(e);
+    }
+  }  
+
+
   /*For testing*/
   static public void printByteArray(byte[] value){
   	if(value == null){
