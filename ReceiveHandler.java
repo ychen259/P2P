@@ -13,13 +13,15 @@ public class ReceiveHandler implements Runnable {
   int neighborId;
   ObjectOutputStream out;         //stream write to the socket
   ObjectInputStream in;
-  List<ObjectOutputStream> allOutStream = new ArrayList<ObjectOutputStream>();  /*store all output stream*/
-                                                                                /*I need this to send have message to all neighbors*/
+  Map<Integer,ObjectOutputStream> allOutStream = new HashMap<Integer, ObjectOutputStream>(); /*store all output stream*/
+                                                                                              /*I need this to send have message to all neighbors*/
+                                                                                              /*Integer: neighbor peer ID*/
+                                                                                              /*ObjectOutputStream: their output stream*/
 
   long startDownloadTime;
   long stopDownloadTime;
 
-  public ReceiveHandler(peerProcess peer, int neighborId, ObjectInputStream in, ObjectOutputStream out, List<ObjectOutputStream> allOutStream){
+  public ReceiveHandler(peerProcess peer, int neighborId, ObjectInputStream in, ObjectOutputStream out, Map<Integer,ObjectOutputStream> allOutStream){
     this.peer = peer;
     this.neighborId = neighborId;
     this.out = out;
@@ -40,12 +42,10 @@ public class ReceiveHandler implements Runnable {
 
   public void sendMessageToAll(byte[] msg){
 	try{
-        int size = allOutStream.size();
-
-        for(int i=0; i<size; i++){
-        	ObjectOutputStream outstream = allOutStream.get(i);
-        	outstream.write(msg);
-		    outstream.flush();
+        for(Map.Entry<Integer,ObjectOutputStream> entry : allOutStream.entrySet()){
+            ObjectOutputStream outstream = entry.getValue();
+            outstream.write(msg);
+            outstream.flush();
         }
 
 	}
