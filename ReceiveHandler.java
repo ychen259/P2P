@@ -151,6 +151,44 @@ public class ReceiveHandler implements Runnable {
                 else if(msgType[0] == 1){
                     System.out.println("Peer " + peer.peerId + ": receive unchoke message from " + neighborId);
                     peer.isChoke.put(neighborId, false);
+
+                    byte [] neighborBitfieldMap = peer.bitfieldMap.get(neighborId);
+                    byte [] myBitfieldMap = peer.bitfieldMap.get(peer.peerId);
+                    int numberOfPiece = peer.numberOfPiece;
+                    int numberOfPieceIhave = 0;
+                    for(int i = 0; i < numberOfPiece; i++){
+                       if(Utilities.isSetBitInBitfield(myBitfieldMap, i) == true){
+                         numberOfPieceIhave++;
+                       }
+                    }
+
+                    if(numberOfPieceIhave == numberOfPiece){
+                      System.out.println("Peer" + peer.peerId + " : I have complete file");
+                    }
+                    else{
+                        /****Get random interesting piece from neighbor ****/
+                        int desiredIndex = 0;
+                        Random rand = new Random();
+
+                        while(true){
+                          desiredIndex = rand.nextInt(peer.numberOfPiece); /*generate random number from 0 to (numberOfPiece-1)*/
+
+                          /*Break out the loop until find a valid index*/
+                          if(Utilities.isSetBitInBitfield(myBitfieldMap, desiredIndex) == false && 
+                            Utilities.isSetBitInBitfield(neighborBitfieldMap, desiredIndex) == true)
+                              break;
+
+                        }
+
+                      /***send the request message to neighbor***/
+                        message requestMsg = (new message()).request(desiredIndex); /*create a message object*/
+                        byte[] requestMsgByteArray = Utilities.combineByteArray(requestMsg.msgLen, requestMsg.msgType);//conver object message to byte array
+                        requestMsgByteArray = Utilities.combineByteArray(requestMsgByteArray, requestMsg.payload); //conver object message to byte array
+                        sendMessage(requestMsgByteArray);
+
+                        System.out.println("Peer:" + peer.peerId + ": send request message to " + neighborId);
+                    }
+
                 }
                 else if(msgType[0] == 2){
                     System.out.println("Peer " + peer.peerId + ": receive interested message from " + neighborId);
@@ -237,14 +275,14 @@ public class ReceiveHandler implements Runnable {
 
                     /***send the piece of data to neighbor***/
                     message pieceMsg = (new message()).piece(indexOfPiece, piece); /*create a message object*/
-		            byte[] pieceMsgByteArray = Utilities.combineByteArray(pieceMsg.msgLen, pieceMsg.msgType);//conver object message to byte array
-		            pieceMsgByteArray = Utilities.combineByteArray(pieceMsgByteArray, pieceMsg.payload); //conver object message to byte array
+		                byte[] pieceMsgByteArray = Utilities.combineByteArray(pieceMsg.msgLen, pieceMsg.msgType);//conver object message to byte array
+		                pieceMsgByteArray = Utilities.combineByteArray(pieceMsgByteArray, pieceMsg.payload); //conver object message to byte array
                     sendMessage(pieceMsgByteArray);
                 }
                 else if(msgType[0] == 7){
                     System.out.println("Peer " + peer.peerId + ": receive piece message from " + neighborId);
 
-                    /*store piece into myfile*/
+
                     /*first 4 byte in playload is piece index, rest is actual piece*/ 
                     byte [] indexOfPieceByteArray = Arrays.copyOfRange(playload, 0, 5); // read first 4 byte from pllayload
                     byte [] piece = Arrays.copyOfRange(playload, 5, (length - 1 + 1)); // length - length of message type ==  length of play load 
@@ -254,7 +292,11 @@ public class ReceiveHandler implements Runnable {
                     
                     int indexOfPiece = Utilities.ByteArrayToint(indexOfPieceByteArray);
 
- 
+                    /*store piece into myfile*/
+                    String filename = "./peer_" + peer.peerId + "/" + (new fileInfo().FileName);
+                    int pieceSize = new fileInfo().PieceSize;
+                    Utilities.writePieceToFile(filename, pieceSize, indexOfPiece, piece);
+
                     /*record the download stop time, calculate the current download rate*/
                     stopDownloadTime = System.currentTimeMillis();
                     int downloadRate = piece.length / (int)(stopDownloadTime - startDownloadTime);
@@ -280,8 +322,8 @@ public class ReceiveHandler implements Runnable {
                     
                     /*send a have message to all my neighbor*/
                     message haveMsg = (new message()).have(indexOfPiece); /*create a message object*/
-		            byte[] haveMsgByteArray = Utilities.combineByteArray(haveMsg.msgLen, haveMsg.msgType);//conver object message to byte array
-		            haveMsgByteArray = Utilities.combineByteArray(haveMsgByteArray, haveMsg.payload); //conver object message to byte array
+		                byte[] haveMsgByteArray = Utilities.combineByteArray(haveMsg.msgLen, haveMsg.msgType);//conver object message to byte array
+		                haveMsgByteArray = Utilities.combineByteArray(haveMsgByteArray, haveMsg.payload); //conver object message to byte array
                     sendMessageToAll(haveMsgByteArray);
 
                     /*check do I need to send an not interested message or not*/ 
@@ -324,9 +366,10 @@ public class ReceiveHandler implements Runnable {
 
                     	/***send the request message to neighbor***/
                         message requestMsg = (new message()).request(desiredIndex); /*create a message object*/
-		                byte[] requestMsgByteArray = Utilities.combineByteArray(requestMsg.msgLen, requestMsg.msgType);//conver object message to byte array
-		                requestMsgByteArray = Utilities.combineByteArray(requestMsgByteArray, requestMsg.payload); //conver object message to byte array
+		                    byte[] requestMsgByteArray = Utilities.combineByteArray(requestMsg.msgLen, requestMsg.msgType);//conver object message to byte array
+		                    requestMsgByteArray = Utilities.combineByteArray(requestMsgByteArray, requestMsg.payload); //conver object message to byte array
                         sendMessage(requestMsgByteArray);
+                        System.out.println("Peer:" + peer.peerId + ": send request message to " + neighborId);
                     }
                 }
             }

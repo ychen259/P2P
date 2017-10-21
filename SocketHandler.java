@@ -98,7 +98,7 @@ public class SocketHandler implements Runnable {
         }
       }
       
-      executor.scheduleAtFixedRate(new optimisticNeighbor(peer, allOutStream), 0, OptimisticUnchokingInterval, TimeUnit.SECONDS);
+      executor.scheduleAtFixedRate(new preferredNeighbor(peer, allOutStream), 0, OptimisticUnchokingInterval, TimeUnit.SECONDS);
 
     }
 

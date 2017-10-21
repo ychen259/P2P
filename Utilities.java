@@ -93,7 +93,7 @@ public class Utilities {
 
 
   /*Write data[] into file in particular position (start from pieceSize*indexOfPiece) */
-  static public void writePieceFromFile(String filename, int pieceSize, int indexOfPiece, byte[] data){
+  static public void writePieceToFile(String filename, int pieceSize, int indexOfPiece, byte[] data){
     try{
       RandomAccessFile rf = new RandomAccessFile(filename, "rw");
       rf.seek(pieceSize * indexOfPiece);
@@ -115,7 +115,7 @@ public class Utilities {
     int i=0;
     System.out.print("Msg payload:  ");
     for(i=0; i < length; i++){
-      System.out.print((char)value[i] + " ");
+      System.out.print((byte)value[i] + " ");
     }
     System.out.println();
   }

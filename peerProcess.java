@@ -221,13 +221,17 @@ public class peerProcess {
           System.out.println("piece " + i + " is set: " + result);
         }
       */
-     Thread peer1000 = new Thread(new SocketHandler(1000));
+     /*Thread peer1000 = new Thread(new SocketHandler(1000));
      Thread peer1001 = new Thread(new SocketHandler(1001));
      Thread peer1002 = new Thread(new SocketHandler(1002));
+     Thread peer1003 = new Thread(new SocketHandler(1003));
      peer1000.start();
      peer1001.start();
      peer1002.start();
-     
+     peer1003.start();*/
+     int id = Integer.parseInt(args[0]);
+     Thread peer = new Thread(new SocketHandler(id));
+     peer.start();
 		/**************************Test Code End Here**********************************************************************/
 
     }
