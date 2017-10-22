@@ -23,6 +23,8 @@ public class peerProcess {
     int port;  //my port number
     int numberOfPiece;
 
+    byte [] requestedBitfield;
+
     /*neighbor Info*/
     List<RemotePeerInfo> NeighborPeerInfo = new ArrayList<RemotePeerInfo>();  //store all its neighbor info
                                                                               //RemotePeerInfo has variable
@@ -38,7 +40,7 @@ public class peerProcess {
     Map<Integer, Integer> downloadRate = new HashMap<Integer, Integer>(); //My downloading rate for neighbors
 
     Map<Integer, Socket> neighborSocket = new HashMap<Integer, Socket>();//neighbor's socket
-    																	                                   //Integer: peerID || Socket: their socket
+    																	 //Integer: peerID || Socket: their socket
 
     /*Everyone's bitfield (including myself)*/
     Map<Integer,byte[]> bitfieldMap = new HashMap<Integer, byte[]>(); // Everyone's bitfield
@@ -81,6 +83,20 @@ public class peerProcess {
         /*convert number of bit to number of Byte to store the bitfield*/
         int sizeOfbitfield = ((numberOfPiece%8) == 0? numberOfPiece/8: numberOfPiece/8 + 1);
 
+        byte [] empty = new byte[sizeOfbitfield];
+
+        for(int j = 0; j < sizeOfbitfield; j++){
+           empty[j] = (byte)0x00; /*empty[] = 0000 0000*/
+        }
+
+        byte [] full = new byte[sizeOfbitfield];
+           /*set bitfield to all one*/
+        for(int j = 0; j < numberOfPiece; j++){
+            Utilities.setBitInBitfield(full, j);  /*all 1 for bitfield*/
+         }
+
+        requestedBitfield = empty; /*set requested bitfield to all 0*/
+
         /*set the bitfield to all one if the peer has complete file*/
         /*set the bitfield to all zero if the peer has not file*/
         /*After I set up the bitfield of my own, I break out the loop, because I dont want to set up someone else bitfield*/
@@ -88,21 +104,10 @@ public class peerProcess {
     	for(int i = 0; i < peerInfoArray.size(); i++){
           int id = Integer.parseInt(peerInfoArray.get(i).peerId);
           if(peerInfoArray.get(i).haveFile == true && id == peerId){
-          	byte [] full = new byte[sizeOfbitfield];
-            /*set bitfield to all one*/
-          	for(int j = 0; j < numberOfPiece; j++){
-                Utilities.setBitInBitfield(full, j); 
-          	}
-
             bitfieldMap.put(id, full);
             break;
           }  
           else if(peerInfoArray.get(i).haveFile == false && id == peerId){
-            byte [] empty = new byte[sizeOfbitfield];
-            for(int j = 0; j < sizeOfbitfield; j++){
-                empty[j] = (byte)0x00; /*full[j] = 0000 0000*/
-            }
-
             bitfieldMap.put(id, empty);
             break;
           }
