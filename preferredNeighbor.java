@@ -34,6 +34,25 @@ public class preferredNeighbor implements Runnable {
 		}
 	}
 
+  public int getDesiredIndex(byte [] myBitfieldMap, byte [] neighborBitfieldMap){
+
+    /****Get random interesting piece from neighbor ****/
+    int desiredIndex;
+    Random rand = new Random();
+
+    while(true){
+      desiredIndex = rand.nextInt(peer.numberOfPiece); /*generate random number from 0 to (numberOfPiece-1)*/
+
+      /*Break out the loop until find a valid index*/
+      if(Utilities.isSetBitInBitfield(myBitfieldMap, desiredIndex) == false && 
+        Utilities.isSetBitInBitfield(neighborBitfieldMap, desiredIndex) == true && 
+        Utilities.isSetBitInBitfield(peer.requestedBitfield, desiredIndex) == false);
+        break;
+    }
+
+    return desiredIndex;
+  }
+
     public void run(){
         /*sort the download map*/
         /*sort the download rate from high to low*/
@@ -51,6 +70,7 @@ public class preferredNeighbor implements Runnable {
             sorted_downloadRate.put(entry.getKey(), entry.getValue());
         }
         /*sort the download map end here*/
+
         int size;
         if(sorted_downloadRate.size() > NumberOfPreferredNeighbors){
         	size = NumberOfPreferredNeighbors;
@@ -61,46 +81,31 @@ public class preferredNeighbor implements Runnable {
                 ObjectOutputStream out = allOutStream.get(neighborId);
 
                 /*If neighbor is unchoke already, we do not have to send unchoke message*/
+                /*We just need to send request message*/
                 if(neighborIsChoke == false){
                     byte [] neighborBitfieldMap = peer.bitfieldMap.get(neighborId);
                     byte [] myBitfieldMap = peer.bitfieldMap.get(peer.peerId);
                     int numberOfPiece = peer.numberOfPiece;
-                    int numberOfPieceIhave = 0;
-                    for(int j = 0; j < numberOfPiece; j++){
-                       if(Utilities.isSetBitInBitfield(myBitfieldMap, j) == true){
-                         numberOfPieceIhave++;
-                       }
-                    }
 
-                    if(numberOfPieceIhave == numberOfPiece){
+                    boolean completeFile = Utilities.checkForCompelteFile(myBitfieldMap, numberOfPiece);
+
+                    if(completeFile){
                       System.out.println("Peer" + peer.peerId + " : I have complete file");
                     }
                     else{
                         /****Get random interesting piece from neighbor ****/
-                        int desiredIndex = 0;
-                        Random rand = new Random();
-
-                        while(true){
-                          desiredIndex = rand.nextInt(peer.numberOfPiece); /*generate random number from 0 to (numberOfPiece-1)*/
-
-                          /*Break out the loop until find a valid index*/
-                          if(Utilities.isSetBitInBitfield(myBitfieldMap, desiredIndex) == false && 
-                            Utilities.isSetBitInBitfield(neighborBitfieldMap, desiredIndex) == true)
-                              break;
-
-                        }
+                        int desiredIndex = getDesiredIndex(myBitfieldMap, neighborBitfieldMap);
 
                       /***send the request message to neighbor***/
-                        message requestMsg = (new message()).request(108); /*create a message object*/
+                        message requestMsg = (new message()).request(desiredIndex); /*create a message object*/
                         byte[] requestMsgByteArray = Utilities.combineByteArray(requestMsg.msgLen, requestMsg.msgType);//conver object message to byte array
                         requestMsgByteArray = Utilities.combineByteArray(requestMsgByteArray, requestMsg.payload); //conver object message to byte array
-                        System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
                         sendMessage(out, requestMsgByteArray);
 
-                        System.out.println("11111111111Peer:" + peer.peerId + ": send request message to " + neighborId);
+                        System.out.println("Peer:" + peer.peerId + ": send request message to " + neighborId);
                         continue;
                     }
-                  } 
+                } 
 
 
           	    message unchokeMsg = (new message()).unchoke();
@@ -153,11 +158,11 @@ public class preferredNeighbor implements Runnable {
           	    message unchokeMsg = (new message()).unchoke();
 
           	    /*conver object message to byte array*/
-			    byte[] unchokeMsgByteArray = Utilities.combineByteArray(unchokeMsg.msgLen, unchokeMsg.msgType);
+			          byte[] unchokeMsgByteArray = Utilities.combineByteArray(unchokeMsg.msgLen, unchokeMsg.msgType);
 
           	    /*send a unchoke message*/
-		 	    sendMessage(out, unchokeMsgByteArray);
-		 	    System.out.println("Peer " + peer.peerId + ": unchoke message send to " + neighborId);
+		 	          sendMessage(out, unchokeMsgByteArray);
+		 	          System.out.println("Peer " + peer.peerId + ": unchoke message send to " + neighborId);
          	}  
 
         }

@@ -30,28 +30,28 @@ public class ReceiveHandler implements Runnable {
   }
 
   public void sendMessage(byte[] msg){
-	try{
-		//stream write the message
-		out.write(msg);
-		out.flush();
-	}
-	catch(IOException ioException){
-		ioException.printStackTrace();
-	}
+	  try{
+		  //stream write the message
+		  out.write(msg);
+		  out.flush();
+	  }
+	  catch(IOException ioException){
+		  ioException.printStackTrace();
+	  }
   }
 
   public void sendMessageToAll(byte[] msg){
-	try{
+	  try{
         for(Map.Entry<Integer,ObjectOutputStream> entry : allOutStream.entrySet()){
             ObjectOutputStream outstream = entry.getValue();
             outstream.write(msg);
             outstream.flush();
         }
 
-	}
-	catch(IOException ioException){
-		ioException.printStackTrace();
-	}
+	  }
+	  catch(IOException ioException){
+		  ioException.printStackTrace();
+	  }
   }
 
   public void run(){
@@ -114,10 +114,22 @@ public class ReceiveHandler implements Runnable {
                   handlePieceMessage(length);
                 }
             }
-    }
-    catch(Exception e){
-     System.out.println(e);
-    }
+          }
+          catch(Exception e){
+             System.out.println(e);
+          }
+
+          int numberOfPiece = peer.numberOfPiece;
+          int numOfPeerHaveCompleteFile = 0;
+          for(Map.Entry<Integer,byte[]> entry : peer.bitfieldMap.entrySet()){
+            if(Utilities.checkForCompelteFile(entry.getValue(), numberOfPiece))
+            numOfPeerHaveCompleteFile++;
+          }
+
+          int numberOfPeer = peer.bitfieldMap.size();
+
+          /*When everyone has complete file, stop the program*/
+          if(numOfPeerHaveCompleteFile == numberOfPeer) break;
 
     }
   }
@@ -127,7 +139,7 @@ public class ReceiveHandler implements Runnable {
         System.out.println("Peer " + peer.peerId + ": receive handshake message from " + neighborId); 
         byte [] restByte = new byte[27];
 
-        /*Read the another 28 byte from socket*/
+        /*Read the another 27 byte from socket*/
         in.readFully(restByte, 0, restByte.length);
 
         /*Handshake message is 32 bytes*/
@@ -181,14 +193,10 @@ public class ReceiveHandler implements Runnable {
     byte [] neighborBitfieldMap = peer.bitfieldMap.get(neighborId);
     byte [] myBitfieldMap = peer.bitfieldMap.get(peer.peerId);
     int numberOfPiece = peer.numberOfPiece;
-    int numberOfPieceIhave = 0;
-    for(int i = 0; i < numberOfPiece; i++){
-        if(Utilities.isSetBitInBitfield(myBitfieldMap, i) == true){
-          numberOfPieceIhave++;
-        }
-    }
 
-    if(numberOfPieceIhave == numberOfPiece){
+    boolean completeFile = Utilities.checkForCompelteFile(myBitfieldMap, numberOfPiece);
+
+    if(completeFile){
         System.out.println("Peer" + peer.peerId + " : I have complete file");
     }
     else{
@@ -252,10 +260,15 @@ public class ReceiveHandler implements Runnable {
        Utilities.setBitInBitfield(neighborBitfieldMap, indexOfPiece); /*update bitfield*/
        peer.bitfieldMap.put(neighborId, neighborBitfieldMap); /*Store the bitfield back to hashmap*/
 
-       /*Check if I have that piece or not. If I do not have that piece, set to neighbor to interested neighbor*/
+       /*Check if I have that piece or not. If I do not have that piece, send interested message to neighbor*/
        byte [] myBitfieldMap = peer.bitfieldMap.get(peer.peerId);
        if(Utilities.isSetBitInBitfield(myBitfieldMap, indexOfPiece) == false){
-         peer.isInterested.put(neighborId, true);
+         message interestedMsg = (new message()).interested();
+
+         /*conver object message to byte array*/
+         byte[] interestedMsgByteArray = Utilities.combineByteArray(interestedMsg.msgLen, interestedMsg.msgType);
+
+         sendMessage(interestedMsgByteArray);
        }
     }catch(Exception e){
       System.out.println("Error on receiving Have message");
@@ -287,9 +300,9 @@ public class ReceiveHandler implements Runnable {
 
             hasInterestingPiece = true;
             /*send an interesting message and break*/
-             message interestedMsg = (new message()).interested();
+            message interestedMsg = (new message()).interested();
 
-                            /*conver object message to byte array*/
+            /*conver object message to byte array*/
             byte[] interestedMsgByteArray = Utilities.combineByteArray(interestedMsg.msgLen, interestedMsg.msgType);
 
             sendMessage(interestedMsgByteArray);
@@ -324,7 +337,9 @@ public class ReceiveHandler implements Runnable {
         String filename = "./peer_" + peer.peerId + "/" + (new fileInfo().FileName);
         int pieceSize = new fileInfo().PieceSize;
         int indexOfPiece = Utilities.ByteArrayToint(playload);
-        byte [] piece = Utilities.readPieceFromFile(filename, pieceSize, indexOfPiece);
+
+        int numberOfPiece = peer.numberOfPiece;
+        byte [] piece = Utilities.readPieceFromFile(filename, pieceSize, indexOfPiece, numberOfPiece);
 
         /*set a start time before send data*/
         startDownloadTime = System.currentTimeMillis();
@@ -360,7 +375,8 @@ public class ReceiveHandler implements Runnable {
         /*store piece into myfile*/
         String filename = "./peer_" + peer.peerId + "/" + (new fileInfo().FileName);
         int pieceSize = new fileInfo().PieceSize;
-        Utilities.writePieceToFile(filename, pieceSize, indexOfPiece, piece);
+        int numberOfPiece = peer.numberOfPiece;
+        Utilities.writePieceToFile(filename, pieceSize, indexOfPiece, piece, numberOfPiece);
 
         /*record the download stop time, calculate the current download rate*/
         stopDownloadTime = System.currentTimeMillis();
@@ -373,18 +389,13 @@ public class ReceiveHandler implements Runnable {
         peer.bitfieldMap.put(peer.peerId, myBitfieldMap); /*Store the bitfield back to hashmap*/
 
         /*If all piece have been download, then report I receive whole file*/
-        int numberOfPiece = peer.numberOfPiece;
-        int numberOfPieceIhave = 0;
-        for(int i = 0; i < numberOfPiece; i++){
-          if(Utilities.isSetBitInBitfield(myBitfieldMap, i) == true){
-             numberOfPieceIhave++;
-          }
-        }
 
-        if(numberOfPieceIhave == numberOfPiece){
-            System.out.println("Peer" + peer.peerId + ": I have complete file");
-        }
-                    
+        boolean completeFile = Utilities.checkForCompelteFile(myBitfieldMap, numberOfPiece);
+
+        if(completeFile){
+          System.out.println("Peer" + peer.peerId + " : I have complete file");
+        }       
+
         /*send a have message to all my neighbor*/
         message haveMsg = (new message()).have(indexOfPiece); /*create a message object*/
         byte[] haveMsgByteArray = Utilities.combineByteArray(haveMsg.msgLen, haveMsg.msgType);//conver object message to byte array

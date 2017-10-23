@@ -166,8 +166,7 @@ public class peerProcess {
     /*test My constructor*/
 	public static void main(String[] args) throws IOException{
 		/**************************Test Code**********************************************************************/
-    /*
-		int id = Integer.parseInt(args[0]);
+        /*int id =1000;
         peerProcess test = new peerProcess(id);
        // test.buildSocket();
 
@@ -225,7 +224,17 @@ public class peerProcess {
           boolean result = Utilities.isSetBitInBitfield(value, i);
           System.out.println("piece " + i + " is set: " + result);
         }
-      */
+        
+        System.out.println("Do I hava Complete file: " + Utilities.checkForCompelteFile(value, test.numberOfPiece));
+
+        System.out.println("requested bitfield: ");
+        value = test.requestedBitfield;
+        for(int i = 0; i < numberOfPiece; i++){
+          boolean result = Utilities.isSetBitInBitfield(value, i);
+          System.out.println("piece " + i + " is set: " + result);
+        }
+
+       System.out.println("Do I hava Complete file: " + Utilities.checkForCompelteFile(value, test.numberOfPiece));*/
      /*Thread peer1000 = new Thread(new SocketHandler(1000));
      Thread peer1001 = new Thread(new SocketHandler(1001));
      Thread peer1002 = new Thread(new SocketHandler(1002));

@@ -36,17 +36,6 @@ public class SocketHandler implements Runnable {
     OptimisticUnchokingInterval = info.OptimisticUnchokingInterval;
 	}
 
-	public void sendMessage(byte[] msg){
-		try{
-			//stream write the message
-			out.write(msg);
-			out.flush();
-		}
-		catch(IOException ioException){
-			ioException.printStackTrace();
-		}
-	}
-
     public void run(){
       /*build socket with all other peer*/
       peer.buildSocket();
@@ -73,6 +62,7 @@ public class SocketHandler implements Runnable {
 
       /*send handshake message to all neighbor*/
       handshake handshakeMsg = new handshake(peer.peerId);
+      
       for(int i = 0; i < numberOfNeighbor; i++){
         int neighborId = Integer.parseInt(peer.NeighborPeerInfo.get(i).peerId);
 
@@ -87,7 +77,9 @@ public class SocketHandler implements Runnable {
 		      handshakeMsgByteArray = Utilities.combineByteArray(handshakeMsgByteArray, handshakeMsg.peerId);
 
           /*send handshake message to a neighbor*/
-		      sendMessage(handshakeMsgByteArray);
+          out.write(handshakeMsgByteArray);
+          out.flush();
+
           System.out.println("Peer " + peer.peerId + ": handshake message send to " + neighborId);
           /*****************************************Receive all kinds of message********************************************/
           Thread receiveHandler = new Thread(new ReceiveHandler(peer, neighborId, in, out, allOutStream));

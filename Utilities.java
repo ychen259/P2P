@@ -75,17 +75,33 @@ public class Utilities {
 
   /*Read byte from (pieceSize*indexOfPiecce) to [(pieceSize*indexOfPiecce) + pieceSize] from file*/
   /*(pieceSize*indexOfPiecce) to [(pieceSize*indexOfPiecce) + pieceSize] == read a piece from file*/
-  static public byte[] readPieceFromFile(String filename, int pieceSize, int indexOfPiece){
+  static public byte[] readPieceFromFile(String filename, int pieceSize, int indexOfPiece, int numberOfPiece){
 
-    byte [] result = new byte[pieceSize];
-      
+    int length;
+    byte[] result = new byte[pieceSize];
     try{
       RandomAccessFile rf = new RandomAccessFile(filename, "r");
+
+      /*If it is last piece, change the byte array*/
+      if(indexOfPiece == (numberOfPiece-1)){
+        int fileSize = (int)rf.length(); /*size of file*/
+
+        if(fileSize%pieceSize == 0){
+          length = pieceSize;
+        }
+        else{
+          length = fileSize%pieceSize;
+        }
+      }
+      else{
+        length = pieceSize;
+      }
+
       rf.seek(pieceSize * indexOfPiece);
-      rf.read(result);
+      rf.readFully(result, 0, length);
 
     }catch(Exception e){
-        System.out.println(e);
+        System.out.println("read piece from file error");
     }
     
     return result;
@@ -93,17 +109,48 @@ public class Utilities {
 
 
   /*Write data[] into file in particular position (start from pieceSize*indexOfPiece) */
-  static public void writePieceToFile(String filename, int pieceSize, int indexOfPiece, byte[] data){
+  static public void writePieceToFile(String filename, int pieceSize, int indexOfPiece, byte[] data, int numberOfPiece){
     try{
       RandomAccessFile rf = new RandomAccessFile(filename, "rw");
+      int filesize = (int)rf.length();
+      
+      int length;
+
+      /*If it is last piece, change the byte array*/
+      if(indexOfPiece == (numberOfPiece-1)){
+        int fileSize = (int)rf.length(); /*size of file*/
+
+        if(fileSize%pieceSize == 0){
+          length = pieceSize;
+        }
+        else{
+          length = fileSize%pieceSize;
+        }
+
+      }
+      else{
+        length = pieceSize;
+      }
+
       rf.seek(pieceSize * indexOfPiece);
-      rf.write(data);
+      rf.write(data, 0, length);
 
     }catch(Exception e){
-      System.out.println(e);
+      System.out.println("write piece to file error");
     }
   }  
 
+  /*return false if do not have complete file*/
+  /*return true if has complete file*/
+  static public boolean checkForCompelteFile(byte [] bifield, int numberOfPiece){
+    boolean result = true;
+    for(int i = 0; i< numberOfPiece; i++){
+      if(isSetBitInBitfield(bifield, i) == false)
+        result = false;
+    }
+
+    return result;
+  }
 
   /*For testing*/
   static public void printByteArray(byte[] value){
