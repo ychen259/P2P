@@ -168,10 +168,10 @@ public class ReceiveHandler implements Runnable {
         message bitfieldMsg = (new message()).bitfield(bitfield);
 
         /*conver object message to byte array*/
-        byte[] bitfieldMsgByteArray = Utilities.combineByteArray(bitfieldMsg.msgLen, bitfieldMsg.msgType);
-        bitfieldMsgByteArray = Utilities.combineByteArray(bitfieldMsgByteArray, bitfieldMsg.payload);
+   //     byte[] bitfieldMsgByteArray = Utilities.combineByteArray(bitfieldMsg.msgLen, bitfieldMsg.msgType);
+     //   bitfieldMsgByteArray = Utilities.combineByteArray(bitfieldMsgByteArray, bitfieldMsg.payload);
 
-        sendMessage(bitfieldMsgByteArray);
+        sendMessage(bitfieldMsg.message);
           
         System.out.println("Peer " + peer.peerId + ": Bitfield message is sent to " + neighborId);
     }catch(Exception e){
@@ -204,9 +204,9 @@ public class ReceiveHandler implements Runnable {
 
         /***send the request message to neighbor***/
         message requestMsg = (new message()).request(desiredIndex); /*create a message object*/
-        byte[] requestMsgByteArray = Utilities.combineByteArray(requestMsg.msgLen, requestMsg.msgType);//conver object message to byte array
-        requestMsgByteArray = Utilities.combineByteArray(requestMsgByteArray, requestMsg.payload); //conver object message to byte array
-        sendMessage(requestMsgByteArray);
+        //byte[] requestMsgByteArray = Utilities.combineByteArray(requestMsg.msgLen, requestMsg.msgType);//conver object message to byte array
+       // requestMsgByteArray = Utilities.combineByteArray(requestMsgByteArray, requestMsg.payload); //conver object message to byte array
+        sendMessage(requestMsg.message);
 
         /*set requestedBitfield after send request message to advoid request same piece from different neighbor*/
         Utilities.setBitInBitfield(peer.requestedBitfield, desiredIndex);
@@ -266,9 +266,9 @@ public class ReceiveHandler implements Runnable {
          message interestedMsg = (new message()).interested();
 
          /*conver object message to byte array*/
-         byte[] interestedMsgByteArray = Utilities.combineByteArray(interestedMsg.msgLen, interestedMsg.msgType);
+         //byte[] interestedMsgByteArray = Utilities.combineByteArray(interestedMsg.msgLen, interestedMsg.msgType);
 
-         sendMessage(interestedMsgByteArray);
+         sendMessage(interestedMsg.message);
        }
     }catch(Exception e){
       System.out.println("Error on receiving Have message");
@@ -303,9 +303,9 @@ public class ReceiveHandler implements Runnable {
             message interestedMsg = (new message()).interested();
 
             /*conver object message to byte array*/
-            byte[] interestedMsgByteArray = Utilities.combineByteArray(interestedMsg.msgLen, interestedMsg.msgType);
+           // byte[] interestedMsgByteArray = Utilities.combineByteArray(interestedMsg.msgLen, interestedMsg.msgType);
 
-            sendMessage(interestedMsgByteArray);
+            sendMessage(interestedMsg.message);
             System.out.println("Peer " + myId + ": Interested message is send to " + neighborId);
             break;
           }
@@ -316,9 +316,9 @@ public class ReceiveHandler implements Runnable {
           message notInterestedMsg = (new message()).notInterested();
 
           /*conver object message to byte array*/
-          byte[] notInterestedMsgByteArray = Utilities.combineByteArray(notInterestedMsg.msgLen, notInterestedMsg.msgType);
+          //byte[] notInterestedMsgByteArray = Utilities.combineByteArray(notInterestedMsg.msgLen, notInterestedMsg.msgType);
 
-          sendMessage(notInterestedMsgByteArray);
+          sendMessage(notInterestedMsg.message);
           System.out.println("Peer " + myId + ": not Interested message is send to " + neighborId);
         }
     }
@@ -346,9 +346,10 @@ public class ReceiveHandler implements Runnable {
 
         /***send the piece of data to neighbor***/
         message pieceMsg = (new message()).piece(indexOfPiece, piece); /*create a message object*/
-        byte[] pieceMsgByteArray = Utilities.combineByteArray(pieceMsg.msgLen, pieceMsg.msgType);//conver object message to byte array
-        pieceMsgByteArray = Utilities.combineByteArray(pieceMsgByteArray, pieceMsg.payload); //conver object message to byte array
-        sendMessage(pieceMsgByteArray);
+        //byte[] pieceMsgByteArray = Utilities.combineByteArray(pieceMsg.msgLen, pieceMsg.msgType);//conver object message to byte array
+        //pieceMsgByteArray = Utilities.combineByteArray(pieceMsgByteArray, pieceMsg.payload); //conver object message to byte array
+        sendMessage(pieceMsg.message);
+        System.out.println("Peer " + peer.peerId + ": Piece message is send to " + neighborId);  
     }
     catch(Exception e){
       System.out.println("Error on receiving request message");
@@ -398,9 +399,9 @@ public class ReceiveHandler implements Runnable {
 
         /*send a have message to all my neighbor*/
         message haveMsg = (new message()).have(indexOfPiece); /*create a message object*/
-        byte[] haveMsgByteArray = Utilities.combineByteArray(haveMsg.msgLen, haveMsg.msgType);//conver object message to byte array
-        haveMsgByteArray = Utilities.combineByteArray(haveMsgByteArray, haveMsg.payload); //conver object message to byte array
-        sendMessageToAll(haveMsgByteArray);
+        //byte[] haveMsgByteArray = Utilities.combineByteArray(haveMsg.msgLen, haveMsg.msgType);//conver object message to byte array
+       // haveMsgByteArray = Utilities.combineByteArray(haveMsgByteArray, haveMsg.payload); //conver object message to byte array
+        sendMessageToAll(haveMsg.message);
 
         /*check do I need to send an not interested message or not*/ 
         /*If neighbor not longer has any interesting piece, send an not interested message*/
@@ -417,9 +418,9 @@ public class ReceiveHandler implements Runnable {
             /*send an not interesting message*/
             message notInterestedMsg = (new message()).notInterested();
             /*conver object message to byte array*/
-            byte[] notInterestedMsgByteArray = Utilities.combineByteArray(notInterestedMsg.msgLen, notInterestedMsg.msgType);
+            //byte[] notInterestedMsgByteArray = Utilities.combineByteArray(notInterestedMsg.msgLen, notInterestedMsg.msgType);
 
-            sendMessage(notInterestedMsgByteArray);
+            sendMessage(notInterestedMsg.message);
             System.out.println("Peer " + peer.peerId + ": not Interested message is send to " + neighborId);
         }
 
@@ -432,9 +433,9 @@ public class ReceiveHandler implements Runnable {
 
             /***send the request message to neighbor***/
             message requestMsg = (new message()).request(desiredIndex); /*create a message object*/
-            byte[] requestMsgByteArray = Utilities.combineByteArray(requestMsg.msgLen, requestMsg.msgType);//conver object message to byte array
-            requestMsgByteArray = Utilities.combineByteArray(requestMsgByteArray, requestMsg.payload); //conver object message to byte array
-            sendMessage(requestMsgByteArray);
+            //byte[] requestMsgByteArray = Utilities.combineByteArray(requestMsg.msgLen, requestMsg.msgType);//conver object message to byte array
+            //requestMsgByteArray = Utilities.combineByteArray(requestMsgByteArray, requestMsg.payload); //conver object message to byte array
+            sendMessage(requestMsg.message);
 
             /*set requestedBitfield after send request message to advoid request same piece from different neighbor*/
             Utilities.setBitInBitfield(peer.requestedBitfield, desiredIndex);

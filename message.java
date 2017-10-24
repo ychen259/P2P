@@ -5,7 +5,7 @@ public class message {
   byte[] msgLen = new byte[4];
   byte[] msgType = new byte[1];
   byte[] payload; 
-
+  byte [] message;
   static byte choke = 0;
   static byte unchoke = 1;
   static byte interested = 2;
@@ -25,6 +25,7 @@ public class message {
   	message result = new message();
     result.msgLen = Utilities.intToByteArray(1);  /*only Msg Type and without payload*/
     result.msgType[0] = choke;
+    result.message = Utilities.combineByteArray(result.msgLen, result.msgType);
     return result;
   }
 
@@ -33,7 +34,7 @@ public class message {
   	message result = new message();
     result.msgLen = Utilities.intToByteArray(1);  /*only Msg Type and without payload*/
     result.msgType[0] = unchoke;
-
+    result.message = Utilities.combineByteArray(result.msgLen, result.msgType);
     return result;
   }
 
@@ -42,7 +43,7 @@ public class message {
   	message result = new message();
     result.msgLen = Utilities.intToByteArray(1);  /*only Msg Type and without payload*/
     result.msgType[0] = interested;
-
+    result.message = Utilities.combineByteArray(result.msgLen, result.msgType);
     return result;
   }
 
@@ -51,7 +52,7 @@ public class message {
   	message result = new message();
     result.msgLen = Utilities.intToByteArray(1);  /*only Msg Type and without payload*/
     result.msgType[0] = notInterested;
-
+    result.message = Utilities.combineByteArray(result.msgLen, result.msgType);
     return result;
   }
 
@@ -61,6 +62,9 @@ public class message {
     result.msgLen = Utilities.intToByteArray(1+4);  /*Msg type(1) + pieceIndex(4)*/
     result.msgType[0] = have;
     result.payload = Utilities.intToByteArray(pieceIndex);
+
+    result.message = Utilities.combineByteArray(result.msgLen, result.msgType);
+    result.message = Utilities.combineByteArray(result.message, result.payload);
     return result;
   }
 
@@ -71,6 +75,8 @@ public class message {
     result.msgLen = Utilities.intToByteArray(1 + lenOfbitfields);  /*Msg type(1) + size of bitfields*/
     result.msgType[0] = bitfield;
     result.payload = bitfields;
+    result.message = Utilities.combineByteArray(result.msgLen, result.msgType);
+    result.message = Utilities.combineByteArray(result.message, result.payload);
     return result;
   }
 
@@ -80,6 +86,8 @@ public class message {
     result.msgLen = Utilities.intToByteArray(1+4);  /*Msg type(1) + pieceIndex(4)*/
     result.msgType[0] = request;
     result.payload = Utilities.intToByteArray(pieceIndex);
+    result.message = Utilities.combineByteArray(result.msgLen, result.msgType);
+    result.message = Utilities.combineByteArray(result.message, result.payload);
     return result;
   }
 
@@ -99,6 +107,8 @@ public class message {
     System.arraycopy(pieces,0, combined, index.length, pieces.length);
 
     result.payload = combined;
+    result.message = Utilities.combineByteArray(result.msgLen, result.msgType);
+    result.message = Utilities.combineByteArray(result.message, result.payload);
     return result;
   }
 
@@ -110,44 +120,51 @@ public class message {
 
         message choke = new message().choke();   
         System.out.println("choke Msg length:   " + Utilities.ByteArrayToint(choke.msgLen));
-        System.out.println("choke Msg type:   " + choke.msgType);
+        System.out.println("choke Msg type:   " + choke.msgType[0]);
         Utilities.printByteArray(choke.payload); 
-
+        Utilities.printByteArray(choke.message); 
 
         message unchoke = new message().unchoke();        
         System.out.println("\nunchoke Msg length:   " + Utilities.ByteArrayToint(unchoke.msgLen));
-        System.out.println("unchoke Msg type:   " + unchoke.msgType);
+        System.out.println("unchoke Msg type:   " + unchoke.msgType[0]);
         Utilities.printByteArray(unchoke.payload);   
+        Utilities.printByteArray(unchoke.message);
 
         message interested = new message().interested();    
         System.out.println("\ninterested Msg length:   " + Utilities.ByteArrayToint(interested.msgLen));
-        System.out.println("interested Msg type:   " + interested.msgType);
+        System.out.println("interested Msg type:   " + interested.msgType[0]);
         Utilities.printByteArray(interested.payload);    
+        Utilities.printByteArray(interested.message);
 
         message notInterested = new message().notInterested();       
         System.out.println("\nnotInterested Msg length:   " + Utilities.ByteArrayToint(notInterested.msgLen));
-        System.out.println("notInterested Msg type:   " + notInterested.msgType);
+        System.out.println("notInterested Msg type:   " + notInterested.msgType[0]);
         Utilities.printByteArray(notInterested.payload); 
+        Utilities.printByteArray(notInterested.message);
 
         message have = new message().have(pieceIndex);
         System.out.println("\nhave Msg length:   " + Utilities.ByteArrayToint(have.msgLen));
-        System.out.println("have Msg type:   " + have.msgType);
+        System.out.println("have Msg type:   " + have.msgType[0]);
         Utilities.printByteArray(have.payload); 
+        Utilities.printByteArray(have.message);
 
         message bitfield = new message().bitfield(bitfields);       
         System.out.println("\nbitfield Msg length:   " + Utilities.ByteArrayToint(bitfield.msgLen));
-        System.out.println("bitfield Msg type:   " + bitfield.msgType);
+        System.out.println("bitfield Msg type:   " + bitfield.msgType[0]);
         Utilities.printByteArray(bitfield.payload);  
+        Utilities.printByteArray(bitfield.message);
 
         message request = new message().request(pieceIndex); 
         System.out.println("\nrequest Msg length:   " + Utilities.ByteArrayToint(request.msgLen));
-        System.out.println("request Msg type:   " + request.msgType);
+        System.out.println("request Msg type:   " + request.msgType[0]);
         Utilities.printByteArray(request.payload); 
+        Utilities.printByteArray(request.message);
 
         message piece = new message().piece(pieceIndex, pieces);
         System.out.println("\npiece Msg length:   " + Utilities.ByteArrayToint(piece.msgLen));
-        System.out.println("piece Msg type:   " + piece.msgType);
+        System.out.println("piece Msg type:   " + piece.msgType[0]);
         Utilities.printByteArray(piece.payload); 
+        Utilities.printByteArray(piece.message);
       }
       
 }
