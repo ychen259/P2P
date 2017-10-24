@@ -29,10 +29,10 @@ public class ReceiveHandler implements Runnable {
     this.allOutStream = allOutStream;
   }
 
-  public void sendMessage(byte[] msg){
+  public void sendMessage(message msg){
 	  try{
 		  //stream write the message
-		  out.write(msg);
+		  out.writeObject(msg);
 		  out.flush();
 	  }
 	  catch(IOException ioException){
@@ -40,11 +40,11 @@ public class ReceiveHandler implements Runnable {
 	  }
   }
 
-  public void sendMessageToAll(byte[] msg){
+  public void sendMessageToAll(message msg){
 	  try{
         for(Map.Entry<Integer,ObjectOutputStream> entry : allOutStream.entrySet()){
             ObjectOutputStream outstream = entry.getValue();
-            outstream.write(msg);
+            outstream.writeObject(msg);
             outstream.flush();
         }
 
@@ -65,19 +65,23 @@ public class ReceiveHandler implements Runnable {
             /*length == length of message (first 4 bytes)*/
             /*msgType[0] == type of message (byte 5)*/
             /*playload == rest of message (all byte after byte 5)*/
-            in.readFully(lengthOfMessage, 0, lengthOfMessage.length);
+            message input = (message)in.readObject();
 
-            length = Utilities.ByteArrayToint(lengthOfMessage);
+            length = Utilities.ByteArrayToint(input.msgLen);
 
             /*Read one byte from socket*/
-            in.readFully(msgType, 0, msgType.length);
+            //in.readObject(msgType);
             
+            msgType = input.msgType;
+
             /*If it is handshake message, then the fifth char is I*/
             byte flagForHandshake = 'I';
 
             /*Handle handshake message*/
             if(msgType[0] == flagForHandshake){
-          	  handleHandshakeMessage(lengthOfMessage, msgType);    
+              byte [] header = input.header;
+              byte [] peerId = input.peerId;
+          	  handleHandshakeMessage(header, peerId);    
             }
             /*Handle Actual message*/
             else{
@@ -102,16 +106,20 @@ public class ReceiveHandler implements Runnable {
                   handleNotInterestedMessage();    
                 }
                 else if(msgType[0] == 4){
-                  handleHaveMessage(length);
+                  byte [] payload = input.payload;
+                  handleHaveMessage(payload);
                 }
                 else if(msgType[0] == 5){
-                  handleBitfieldMessage(length);
+                                    byte [] payload = input.payload;
+                  handleBitfieldMessage(payload);
                 }
                 else if(msgType[0] == 6){
-                  handleRequestMessage(length);
+                                    byte [] payload = input.payload;
+                  handleRequestMessage(payload);
                 }
                 else if(msgType[0] == 7){
-                  handlePieceMessage(length);
+                                    byte [] payload = input.payload;
+                  handlePieceMessage(payload);
                 }
             }
           }
@@ -134,23 +142,24 @@ public class ReceiveHandler implements Runnable {
     }
   }
 
-  public void handleHandshakeMessage(byte[] lengthOfMessage, byte[] msgType){
+  public void handleHandshakeMessage(byte[] msgHeader, byte[] msgId){
     try{
         System.out.println("Peer " + peer.peerId + ": receive handshake message from " + neighborId); 
         byte [] restByte = new byte[27];
 
         /*Read the another 27 byte from socket*/
-        in.readFully(restByte, 0, restByte.length);
+        //in.readObject(restByte);
 
         /*Handshake message is 32 bytes*/
         /*Combine first 4 bytes + 1 + 27 bytes into 32 bytes*/
-        byte[] message = Utilities.combineByteArray(lengthOfMessage, msgType);
-        message = Utilities.combineByteArray(message, restByte);      
+        //byte[] message = Utilities.combineByteArray(lengthOfMessage, msgType);
+        //message = Utilities.combineByteArray(message, restByte);      
 
-        byte[] msgHeader = Arrays.copyOfRange(message, 0, 18); /* copy index from 0 to 18 (not include 18)*/
+        //byte[] msgHeader = Arrays.copyOfRange(message, 0, 18); /* copy index from 0 to 18 (not include 18)*/
+        //byte[] msgHeader = 
         String msgHeaderInString = new String(msgHeader); /*convert byte array to String*/
   
-        byte[] msgId = Arrays.copyOfRange(message, 28, 32); /* copy index from 28 to 32 (not include 32)*/
+        //byte[] msgId = Arrays.copyOfRange(message, 28, 32); /* copy index from 28 to 32 (not include 32)*/
         int msgIdInInt = Utilities.ByteArrayToint(msgId); /*convert byte array to int*/
                 
         //System.out.println("Msg ID: " +  msgIdInInt + "  Except value is : " + neighborId);
@@ -171,7 +180,7 @@ public class ReceiveHandler implements Runnable {
    //     byte[] bitfieldMsgByteArray = Utilities.combineByteArray(bitfieldMsg.msgLen, bitfieldMsg.msgType);
      //   bitfieldMsgByteArray = Utilities.combineByteArray(bitfieldMsgByteArray, bitfieldMsg.payload);
 
-        sendMessage(bitfieldMsg.message);
+        sendMessage(bitfieldMsg);
           
         System.out.println("Peer " + peer.peerId + ": Bitfield message is sent to " + neighborId);
     }catch(Exception e){
@@ -206,7 +215,7 @@ public class ReceiveHandler implements Runnable {
         message requestMsg = (new message()).request(desiredIndex); /*create a message object*/
         //byte[] requestMsgByteArray = Utilities.combineByteArray(requestMsg.msgLen, requestMsg.msgType);//conver object message to byte array
        // requestMsgByteArray = Utilities.combineByteArray(requestMsgByteArray, requestMsg.payload); //conver object message to byte array
-        sendMessage(requestMsg.message);
+        sendMessage(requestMsg);
 
         /*set requestedBitfield after send request message to advoid request same piece from different neighbor*/
         Utilities.setBitInBitfield(peer.requestedBitfield, desiredIndex);
@@ -248,12 +257,14 @@ public class ReceiveHandler implements Runnable {
     peer.isInterested.put(neighborId, false);  
   }  
 
-  public void handleHaveMessage(int length){
+  public void handleHaveMessage(byte [] payload){
     try{
-       byte [] playload = new byte[length-1];
-       in.readFully(playload, 0, playload.length);
+       /*byte [] playload = new byte[length-1];
+       in.readObject(playload);*/
+
+
        System.out.println("Peer " + peer.peerId + ": receive have message from " + neighborId);
-       int indexOfPiece = Utilities.ByteArrayToint(playload);
+       int indexOfPiece = Utilities.ByteArrayToint(payload);
                      
        /*update the bitfield for neighbor*/
        byte [] neighborBitfieldMap = peer.bitfieldMap.get(neighborId); /*get bitfield from hash table*/
@@ -268,22 +279,24 @@ public class ReceiveHandler implements Runnable {
          /*conver object message to byte array*/
          //byte[] interestedMsgByteArray = Utilities.combineByteArray(interestedMsg.msgLen, interestedMsg.msgType);
 
-         sendMessage(interestedMsg.message);
+         sendMessage(interestedMsg);
+         System.out.println("Peer " + peer.peerId + ": send interested message to " + neighborId);
        }
     }catch(Exception e){
       System.out.println("Error on receiving Have message");
     }
   }
 
-  public void handleBitfieldMessage(int length){
+  public void handleBitfieldMessage(byte [] payload){
     try{
         System.out.println("Peer " + peer.peerId + ": receive bitfield message from " + neighborId); 
-        byte [] playload = new byte[length-1];
-        in.readFully(playload, 0, playload.length); 
+       /*byte [] playload = new byte[length-1];
+       in.readObject(playload);*/
+
 
         /*receive bitfield and update the bitfield of my neighbor*/
         /*playload inside of message is bitmap of its neighbor*/
-        peer.bitfieldMap.put(neighborId, playload);
+        peer.bitfieldMap.put(neighborId, payload);
 
         /*When it receives bitfield, it also can upldate its isInterested hashmap and decide to send interested message to neighbor or not*/
         int numberOfPiece = peer.numberOfPiece;
@@ -305,7 +318,7 @@ public class ReceiveHandler implements Runnable {
             /*conver object message to byte array*/
            // byte[] interestedMsgByteArray = Utilities.combineByteArray(interestedMsg.msgLen, interestedMsg.msgType);
 
-            sendMessage(interestedMsg.message);
+            sendMessage(interestedMsg);
             System.out.println("Peer " + myId + ": Interested message is send to " + neighborId);
             break;
           }
@@ -318,7 +331,7 @@ public class ReceiveHandler implements Runnable {
           /*conver object message to byte array*/
           //byte[] notInterestedMsgByteArray = Utilities.combineByteArray(notInterestedMsg.msgLen, notInterestedMsg.msgType);
 
-          sendMessage(notInterestedMsg.message);
+          sendMessage(notInterestedMsg);
           System.out.println("Peer " + myId + ": not Interested message is send to " + neighborId);
         }
     }
@@ -327,16 +340,18 @@ public class ReceiveHandler implements Runnable {
     }
   }
 
-  public void handleRequestMessage(int length){
+  public void handleRequestMessage(byte [] payload){
     try{
         System.out.println("Peer " + peer.peerId + ": receive request message from " + neighborId);
-        byte [] playload = new byte[length-1];
-        in.readFully(playload, 0, playload.length);
+       /*byte [] playload = new byte[length-1];
+       in.readObject(playload);*/
+
+
 
         /*******Get piece of data from file********/
         String filename = "./peer_" + peer.peerId + "/" + (new fileInfo().FileName);
         int pieceSize = new fileInfo().PieceSize;
-        int indexOfPiece = Utilities.ByteArrayToint(playload);
+        int indexOfPiece = Utilities.ByteArrayToint(payload);
 
         int numberOfPiece = peer.numberOfPiece;
         byte [] piece = Utilities.readPieceFromFile(filename, pieceSize, indexOfPiece, numberOfPiece);
@@ -348,7 +363,7 @@ public class ReceiveHandler implements Runnable {
         message pieceMsg = (new message()).piece(indexOfPiece, piece); /*create a message object*/
         //byte[] pieceMsgByteArray = Utilities.combineByteArray(pieceMsg.msgLen, pieceMsg.msgType);//conver object message to byte array
         //pieceMsgByteArray = Utilities.combineByteArray(pieceMsgByteArray, pieceMsg.payload); //conver object message to byte array
-        sendMessage(pieceMsg.message);
+        sendMessage(pieceMsg);
         System.out.println("Peer " + peer.peerId + ": Piece message is send to " + neighborId);  
     }
     catch(Exception e){
@@ -356,17 +371,15 @@ public class ReceiveHandler implements Runnable {
     }
   }
 
-  public void handlePieceMessage(int length){
+  public void handlePieceMessage(byte [] payload){
     try{
         System.out.println("Peer " + peer.peerId + ": receive piece message from " + neighborId);
-        byte [] playload = new byte[length-1];
-        in.readFully(playload, 0, playload.length);
 
 
 
         /*first 4 byte in playload is piece index, rest is actual piece*/ 
-        byte [] indexOfPieceByteArray = Arrays.copyOfRange(playload, 0, 5);// read first 4 byte from pllayload
-        byte [] piece = Arrays.copyOfRange(playload, 5, (length - 1 + 1)); // length - length of message type ==  length of play load 
+        byte [] indexOfPieceByteArray = Arrays.copyOfRange(payload, 0, 5);// read first 4 byte from pllayload
+        byte [] piece = Arrays.copyOfRange(payload, 5, payload.length); // length - length of message type ==  length of play load 
                                                                            // because I want to read from 5 to end of playload
                                                                           // I plue 1, syntax of copyOfRange (will not read length -1 + 1)
                                                                           // It will read till playload[lengthOfPlayload -1]
@@ -401,8 +414,8 @@ public class ReceiveHandler implements Runnable {
         message haveMsg = (new message()).have(indexOfPiece); /*create a message object*/
         //byte[] haveMsgByteArray = Utilities.combineByteArray(haveMsg.msgLen, haveMsg.msgType);//conver object message to byte array
        // haveMsgByteArray = Utilities.combineByteArray(haveMsgByteArray, haveMsg.payload); //conver object message to byte array
-        sendMessageToAll(haveMsg.message);
-
+        sendMessageToAll(haveMsg);
+     
         /*check do I need to send an not interested message or not*/ 
         /*If neighbor not longer has any interesting piece, send an not interested message*/
         boolean hasInterestingPiece = false;
@@ -420,7 +433,7 @@ public class ReceiveHandler implements Runnable {
             /*conver object message to byte array*/
             //byte[] notInterestedMsgByteArray = Utilities.combineByteArray(notInterestedMsg.msgLen, notInterestedMsg.msgType);
 
-            sendMessage(notInterestedMsg.message);
+            sendMessage(notInterestedMsg);
             System.out.println("Peer " + peer.peerId + ": not Interested message is send to " + neighborId);
         }
 
@@ -435,7 +448,7 @@ public class ReceiveHandler implements Runnable {
             message requestMsg = (new message()).request(desiredIndex); /*create a message object*/
             //byte[] requestMsgByteArray = Utilities.combineByteArray(requestMsg.msgLen, requestMsg.msgType);//conver object message to byte array
             //requestMsgByteArray = Utilities.combineByteArray(requestMsgByteArray, requestMsg.payload); //conver object message to byte array
-            sendMessage(requestMsg.message);
+            sendMessage(requestMsg);
 
             /*set requestedBitfield after send request message to advoid request same piece from different neighbor*/
             Utilities.setBitInBitfield(peer.requestedBitfield, desiredIndex);

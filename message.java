@@ -1,11 +1,16 @@
 import java.io.*;
 import java.util.*;
 
-public class message {  
+public class message implements Serializable{  
+      private static final long serialVersionUID = 1L;  
   byte[] msgLen = new byte[4];
   byte[] msgType = new byte[1];
   byte[] payload; 
   byte [] message;
+
+    byte[] header = new byte[18];
+  byte [] zeroBits = new byte[10];
+  byte[] peerId = new byte[4];  
   static byte choke = 0;
   static byte unchoke = 1;
   static byte interested = 2;
@@ -19,7 +24,14 @@ public class message {
 *    Msg Length	|	Msg Type	|	Payload		 
 *  	(4 bytes)	|	(1 byte)	|	(n bytes)			
 */
-
+ static public message handshake(int peerId){
+  message result = new message();
+    result.header = "P2PFILESHARINGPROJ".getBytes();
+    result.zeroBits = new byte[]{0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    result.peerId = Utilities.intToByteArray(peerId);
+    result.msgType[0] = 'I';
+    return result;
+  }
   /*Msg == 1; type = choke; payload = null*/
   static public message choke(){
   	message result = new message();

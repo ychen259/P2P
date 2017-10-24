@@ -61,8 +61,8 @@ public class SocketHandler implements Runnable {
       }
 
       /*send handshake message to all neighbor*/
-      handshake handshakeMsg = new handshake(peer.peerId);
-      
+      //handshake handshakeMsg = new handshake(peer.peerId);
+message handShakeMsg = new message().handshake(peer.peerId);
       for(int i = 0; i < numberOfNeighbor; i++){
         int neighborId = Integer.parseInt(peer.NeighborPeerInfo.get(i).peerId);
 
@@ -73,11 +73,11 @@ public class SocketHandler implements Runnable {
          /******************************************Send and receive Handshake********************************************/
 
 		      /*convert handshake object to 32 byte array*/
-		      byte[] handshakeMsgByteArray = Utilities.combineByteArray(handshakeMsg.header, handshakeMsg.zeroBits);
-		      handshakeMsgByteArray = Utilities.combineByteArray(handshakeMsgByteArray, handshakeMsg.peerId);
+		      /*byte[] handshakeMsgByteArray = Utilities.combineByteArray(handshakeMsg.header, handshakeMsg.zeroBits);
+		      handshakeMsgByteArray = Utilities.combineByteArray(handshakeMsgByteArray, handshakeMsg.peerId);*/
 
           /*send handshake message to a neighbor*/
-          out.write(handshakeMsgByteArray);
+          out.writeObject(handShakeMsg);
           out.flush();
 
           System.out.println("Peer " + peer.peerId + ": handshake message send to " + neighborId);

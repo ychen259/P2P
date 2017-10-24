@@ -23,10 +23,10 @@ public class preferredNeighbor implements Runnable {
      NumberOfPreferredNeighbors = info.NumberOfPreferredNeighbors;
    }
 
-	public void sendMessage(ObjectOutputStream out, byte[] msg){
+	public void sendMessage(ObjectOutputStream out, message msg){
 		try{
 			//stream write the message
-			out.write(msg);
+			out.writeObject(msg);
 			out.flush();
 		}
 		catch(IOException ioException){
@@ -100,7 +100,7 @@ public class preferredNeighbor implements Runnable {
                         message requestMsg = (new message()).request(desiredIndex); /*create a message object*/
                        //byte[] requestMsgByteArray = Utilities.combineByteArray(requestMsg.msgLen, requestMsg.msgType);//conver object message to byte array
                        // requestMsgByteArray = Utilities.combineByteArray(requestMsgByteArray, requestMsg.payload); //conver object message to byte array
-                        sendMessage(out, requestMsg.message);
+                        sendMessage(out, requestMsg);
 
                         System.out.println("Peer:" + peer.peerId + ": send request message to " + neighborId);
                         continue;
@@ -114,7 +114,7 @@ public class preferredNeighbor implements Runnable {
 			          //byte[] unchokeMsgByteArray = Utilities.combineByteArray(unchokeMsg.msgLen, unchokeMsg.msgType);
 
           	    /*send a unchoke message*/
-		 	          sendMessage(out, unchokeMsg.message);
+		 	          sendMessage(out, unchokeMsg);
 		 	          //System.out.println("I am here : "  + i );
 		 	          System.out.println("Peer " + peer.peerId + ": unchoke message send to " + neighborId);
        	    }
@@ -131,7 +131,7 @@ public class preferredNeighbor implements Runnable {
 			          //byte[] chokeMsgByteArray = Utilities.combineByteArray(chokeMsg.msgLen, chokeMsg.msgType);
 
           	    /*send a unchoke message*/
-		 	          sendMessage(out, chokeMsg.message);
+		 	          sendMessage(out, chokeMsg);
 		 	    		 	// System.out.println("I am here : "  + i );
 		 	          System.out.println("Peer " + peer.peerId + ": choke message send to " + neighborId);
        	    }
@@ -161,7 +161,7 @@ public class preferredNeighbor implements Runnable {
 			          byte[] unchokeMsgByteArray = Utilities.combineByteArray(unchokeMsg.msgLen, unchokeMsg.msgType);
 
           	    /*send a unchoke message*/
-		 	          sendMessage(out, unchokeMsg.message);
+		 	          sendMessage(out, unchokeMsg);
 		 	          System.out.println("Peer " + peer.peerId + ": unchoke message send to " + neighborId);
          	}  
 
