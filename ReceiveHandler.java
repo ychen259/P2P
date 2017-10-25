@@ -61,10 +61,12 @@ public class ReceiveHandler implements Runnable {
 
     while(true){
         try{
+
             /*Handle all kinds of message*/
             /*length == length of message (first 4 bytes)*/
             /*msgType[0] == type of message (byte 5)*/
             /*playload == rest of message (all byte after byte 5)*/
+
             in.readFully(lengthOfMessage, 0, lengthOfMessage.length);
 
             length = Utilities.ByteArrayToint(lengthOfMessage);
@@ -126,8 +128,7 @@ public class ReceiveHandler implements Runnable {
             numOfPeerHaveCompleteFile++;
           }
 
-          int numberOfPeer = peer.bitfieldMap.size();
-
+          int numberOfPeer = peer.numberOfPeer;
           /*When everyone has complete file, stop the program*/
           if(numOfPeerHaveCompleteFile == numberOfPeer) break;
 
@@ -140,7 +141,7 @@ public class ReceiveHandler implements Runnable {
         byte [] restByte = new byte[27];
 
         /*Read the another 27 byte from socket*/
-        in.readFully(restByte, 0, restByte.length);
+        in.read(restByte, 0, restByte.length);
 
         /*Handshake message is 32 bytes*/
         /*Combine first 4 bytes + 1 + 27 bytes into 32 bytes*/
@@ -269,6 +270,7 @@ public class ReceiveHandler implements Runnable {
          //byte[] interestedMsgByteArray = Utilities.combineByteArray(interestedMsg.msgLen, interestedMsg.msgType);
 
          sendMessage(interestedMsg.message);
+         System.out.println("Peer " + peer.peerId + " : send interested message to " + neighborId);
        }
     }catch(Exception e){
       System.out.println("Error on receiving Have message");
@@ -402,6 +404,7 @@ public class ReceiveHandler implements Runnable {
         //byte[] haveMsgByteArray = Utilities.combineByteArray(haveMsg.msgLen, haveMsg.msgType);//conver object message to byte array
        // haveMsgByteArray = Utilities.combineByteArray(haveMsgByteArray, haveMsg.payload); //conver object message to byte array
         sendMessageToAll(haveMsg.message);
+        System.out.println("Peer" + peer.peerId + " : Send have message to all neighbors");
 
         /*check do I need to send an not interested message or not*/ 
         /*If neighbor not longer has any interesting piece, send an not interested message*/
@@ -436,7 +439,7 @@ public class ReceiveHandler implements Runnable {
             //byte[] requestMsgByteArray = Utilities.combineByteArray(requestMsg.msgLen, requestMsg.msgType);//conver object message to byte array
             //requestMsgByteArray = Utilities.combineByteArray(requestMsgByteArray, requestMsg.payload); //conver object message to byte array
             sendMessage(requestMsg.message);
-
+  
             /*set requestedBitfield after send request message to advoid request same piece from different neighbor*/
             Utilities.setBitInBitfield(peer.requestedBitfield, desiredIndex);
             System.out.println("Peer:" + peer.peerId + ": send request message to " + neighborId);
