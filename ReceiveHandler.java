@@ -104,16 +104,28 @@ public class ReceiveHandler implements Runnable {
                   handleNotInterestedMessage();    
                 }
                 else if(msgType[0] == 4){
-                  handleHaveMessage(length);
+                  byte [] playload = new byte[length-1];
+                  in.readFully(playload, 0, playload.length);
+
+                  handleHaveMessage(playload);
                 }
                 else if(msgType[0] == 5){
-                  handleBitfieldMessage(length);
+                  byte [] playload = new byte[length-1];
+                  in.readFully(playload, 0, playload.length);
+
+                  handleBitfieldMessage(playload);
                 }
                 else if(msgType[0] == 6){
-                  handleRequestMessage(length);
+                  byte [] playload = new byte[length-1];
+                  in.readFully(playload, 0, playload.length);
+
+                  handleRequestMessage(playload);
                 }
                 else if(msgType[0] == 7){
-                  handlePieceMessage(length);
+                  byte [] playload = new byte[length-1];
+                  in.readFully(playload, 0, playload.length);
+
+                  handlePieceMessage(playload);
                 }
             }
           }
@@ -202,7 +214,8 @@ public class ReceiveHandler implements Runnable {
     }
     else{
         int desiredIndex = getDesiredIndex(myBitfieldMap, neighborBitfieldMap);
-
+System.out.println("Index:     " + desiredIndex);
+        if(desiredIndex == -1) return; 
         /***send the request message to neighbor***/
         message requestMsg = (new message()).request(desiredIndex); /*create a message object*/
         //byte[] requestMsgByteArray = Utilities.combineByteArray(requestMsg.msgLen, requestMsg.msgType);//conver object message to byte array
@@ -221,6 +234,10 @@ public class ReceiveHandler implements Runnable {
     /****Get random interesting piece from neighbor ****/
     int desiredIndex;
     Random rand = new Random();
+
+    boolean hasDesiredIndex = Arrays.equals(myBitfieldMap, neighborBitfieldMap);
+
+    if(hasDesiredIndex) return -1;
 
     while(true){
       desiredIndex = rand.nextInt(peer.numberOfPiece); /*generate random number from 0 to (numberOfPiece-1)*/
@@ -249,10 +266,8 @@ public class ReceiveHandler implements Runnable {
     peer.isInterested.put(neighborId, false);  
   }  
 
-  public void handleHaveMessage(int length){
+  public void handleHaveMessage(byte [] playload){
     try{
-       byte [] playload = new byte[length-1];
-       in.readFully(playload, 0, playload.length);
        System.out.println("Peer " + peer.peerId + ": receive have message from " + neighborId);
        int indexOfPiece = Utilities.ByteArrayToint(playload);
                      
@@ -277,11 +292,9 @@ public class ReceiveHandler implements Runnable {
     }
   }
 
-  public void handleBitfieldMessage(int length){
+  public void handleBitfieldMessage(byte [] playload){
     try{
         System.out.println("Peer " + peer.peerId + ": receive bitfield message from " + neighborId); 
-        byte [] playload = new byte[length-1];
-        in.readFully(playload, 0, playload.length); 
 
         /*receive bitfield and update the bitfield of my neighbor*/
         /*playload inside of message is bitmap of its neighbor*/
@@ -329,11 +342,9 @@ public class ReceiveHandler implements Runnable {
     }
   }
 
-  public void handleRequestMessage(int length){
+  public void handleRequestMessage(byte [] playload){
     try{
         System.out.println("Peer " + peer.peerId + ": receive request message from " + neighborId);
-        byte [] playload = new byte[length-1];
-        in.readFully(playload, 0, playload.length);
 
         /*******Get piece of data from file********/
         String filename = "./peer_" + peer.peerId + "/" + (new fileInfo().FileName);
@@ -358,20 +369,16 @@ public class ReceiveHandler implements Runnable {
     }
   }
 
-  public void handlePieceMessage(int length){
+  public void handlePieceMessage(byte [] playload){
     try{
         System.out.println("Peer " + peer.peerId + ": receive piece message from " + neighborId);
-        byte [] playload = new byte[length-1];
-        in.readFully(playload, 0, playload.length);
 
-
+        int length = playload.length;
 
         /*first 4 byte in playload is piece index, rest is actual piece*/ 
-        byte [] indexOfPieceByteArray = Arrays.copyOfRange(playload, 0, 5);// read first 4 byte from pllayload
-        byte [] piece = Arrays.copyOfRange(playload, 5, (length - 1 + 1)); // length - length of message type ==  length of play load 
-                                                                           // because I want to read from 5 to end of playload
-                                                                          // I plue 1, syntax of copyOfRange (will not read length -1 + 1)
-                                                                          // It will read till playload[lengthOfPlayload -1]
+        byte [] indexOfPieceByteArray = Arrays.copyOfRange(playload, 0, 4);// read first 4 byte from pllayload
+
+        byte [] piece = Arrays.copyOfRange(playload, 4, length); // Copy rest byte to piece
                     
         int indexOfPiece = Utilities.ByteArrayToint(indexOfPieceByteArray);
 
@@ -433,6 +440,7 @@ public class ReceiveHandler implements Runnable {
         if(isChokeByNeighbor == false){
             /****Get random interesting piece from neighbor ****/
             int desiredIndex = getDesiredIndex(myBitfieldMap, neighborBitfieldMap);
+            if(desiredIndex == -1) return;
 
             /***send the request message to neighbor***/
             message requestMsg = (new message()).request(desiredIndex); /*create a message object*/

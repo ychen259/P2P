@@ -6,20 +6,19 @@ import java.util.Map.Entry;
 
 public class Testing {
     public static void main(String[] args) {
-                            int desiredIndex;
-                        Random rand = new Random();
+      int [] a = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 
-                        while(true){
-                          desiredIndex = rand.nextInt(100); /*generate random number from 0 to (numberOfPiece-1)*/
+      int [] b = Arrays.copyOfRange(a, 4, 10);
 
-                          /*Break out the loop until find a valid index*/
-                          if(desiredIndex > 10 && desiredIndex < 20)
-                            break;
-System.out.println("I am here");
-                        }
-                          System.out.println("index" + desiredIndex);
-                        
+      for(int i = 0; i < 10; i++){
+        System.out.print(a[i] + "  ");
+      }
+      System.out.println();
 
+      for(int i = 0; i < b.length; i++){
+        System.out.print(b[i] + "  ");
+      }
+      System.out.println();
     }
 }
 
