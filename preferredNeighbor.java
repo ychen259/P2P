@@ -57,6 +57,9 @@ public class preferredNeighbor implements Runnable {
   }
 
     public void run(){
+        /*start after half second*/
+        Utilities.threadSleep(500);
+
         /*sort the download map*/
         /*sort the download rate from high to low*/
         List<Entry<Integer, Integer>> list = new LinkedList<>(peer.downloadRate.entrySet());
@@ -98,13 +101,13 @@ public class preferredNeighbor implements Runnable {
                     else{
                         /****Get random interesting piece from neighbor ****/
                         int desiredIndex = getDesiredIndex(myBitfieldMap, neighborBitfieldMap);
-                        if (desiredIndex == -1) continue;
+
                       /***send the request message to neighbor***/
                         message requestMsg = (new message()).request(desiredIndex); /*create a message object*/
                        //byte[] requestMsgByteArray = Utilities.combineByteArray(requestMsg.msgLen, requestMsg.msgType);//conver object message to byte array
                        // requestMsgByteArray = Utilities.combineByteArray(requestMsgByteArray, requestMsg.payload); //conver object message to byte array
                         sendMessage(out, requestMsg.message);
-
+//Utilities.threadSleep(10);
                         System.out.println("Peer:" + peer.peerId + ": send request message to " + neighborId);
                         continue;
                     }
@@ -153,7 +156,7 @@ public class preferredNeighbor implements Runnable {
 
                 boolean neighborIsChoke = peer.isChoke.get(neighborId);
                 ObjectOutputStream out = allOutStream.get(neighborId);
-                
+
                 /*If neighbor is unchoke already, we do not have to send unchoke message*/
                 /*send a request message*/
                 if(neighborIsChoke == false){
@@ -176,7 +179,7 @@ public class preferredNeighbor implements Runnable {
                        //byte[] requestMsgByteArray = Utilities.combineByteArray(requestMsg.msgLen, requestMsg.msgType);//conver object message to byte array
                        // requestMsgByteArray = Utilities.combineByteArray(requestMsgByteArray, requestMsg.payload); //conver object message to byte array
                         sendMessage(out, requestMsg.message);
-
+//Utilities.threadSleep(10);
                         System.out.println("Peer:" + peer.peerId + ": send request message to " + neighborId);
                         continue;
                     }

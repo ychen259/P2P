@@ -19,6 +19,10 @@ public class Testing {
         System.out.print(b[i] + "  ");
       }
       System.out.println();
+
+          byte c;
+    System.out.println(c);
     }
+
 }
 

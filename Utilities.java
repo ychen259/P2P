@@ -152,6 +152,15 @@ public class Utilities {
     return result;
   }
 
+  static public void threadSleep(int s){
+    try{
+      Thread.sleep(s);
+    }
+    catch(Exception e){
+      System.out.println(e);
+    }
+  }
+
   /*For testing*/
   static public void printByteArray(byte[] value){
   	if(value == null){
