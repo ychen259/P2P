@@ -99,7 +99,7 @@ public class Utilities {
 
       rf.seek(pieceSize * indexOfPiece);
       rf.readFully(result, 0, length);
-
+      rf.close();
     }catch(Exception e){
         System.out.println("read piece from file error");
     }
@@ -109,7 +109,7 @@ public class Utilities {
 
 
   /*Write data[] into file in particular position (start from pieceSize*indexOfPiece) */
-  static public void writePieceToFile(String filename, int pieceSize, int indexOfPiece, byte[] data, int numberOfPiece){
+  static public void writePieceToFile(String filename, int pieceSize, int indexOfPiece, byte[] data, int numberOfPiece, int fileSize){
     try{
       RandomAccessFile rf = new RandomAccessFile(filename, "rw");
       int filesize = (int)rf.length();
@@ -118,8 +118,6 @@ public class Utilities {
 
       /*If it is last piece, change the byte array*/
       if(indexOfPiece == (numberOfPiece-1)){
-        int fileSize = (int)rf.length(); /*size of file*/
-
         if(fileSize%pieceSize == 0){
           length = pieceSize;
         }
@@ -134,7 +132,7 @@ public class Utilities {
 
       rf.seek(pieceSize * indexOfPiece);
       rf.write(data, 0, length);
-
+      rf.close();
     }catch(Exception e){
       System.out.println("write piece to file error");
     }

@@ -12,15 +12,15 @@ import java.util.concurrent.*;
  */
 public class SocketHandler implements Runnable {
 	peerProcess peer;
-  ObjectOutputStream out;         //stream write to the socket
- 	ObjectInputStream in;
+    DataOutputStream out;         //stream write to the socket
+ 	DataInputStream in;
  
-  Map<Integer,ObjectOutputStream> allOutStream = new HashMap<Integer, ObjectOutputStream>(); /*store all output stream*/
+  Map<Integer,DataOutputStream> allOutStream = new HashMap<Integer, DataOutputStream>(); /*store all output stream*/
                                                                                               /*I need this to send have message to all neighbors*/
                                                                                               /*Integer: neighbor peer ID*/
                                                                                               /*ObjectOutputStream: their output stream*/
 
-  Map<Integer,ObjectInputStream> allInputStream = new HashMap<Integer, ObjectInputStream>(); /*store all input stream*                                                                        
+  Map<Integer,DataInputStream> allInputStream = new HashMap<Integer, DataInputStream>(); /*store all input stream*                                                                        
                                                                                                   /*Integer: neighbor peer ID*/
                                                                                                   /*ObjectOutputStream: their input stream*/
   ScheduledExecutorService  executor = Executors.newScheduledThreadPool(1);
@@ -49,9 +49,9 @@ public class SocketHandler implements Runnable {
           /*using key peerID to get Socket from neighborSocket map*/
           Socket socket = peer.neighborSocket.get(neighborId); 
 
-          ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
+          DataOutputStream outputStream = new DataOutputStream(socket.getOutputStream());
           outputStream.flush();
-          ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
+          DataInputStream inputStream = new DataInputStream(socket.getInputStream());
           allInputStream.put(neighborId, inputStream);   
           allOutStream.put(neighborId, outputStream);
         }

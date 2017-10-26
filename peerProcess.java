@@ -23,6 +23,7 @@ public class peerProcess {
     int port;  //my port number
     int numberOfPiece;
     int numberOfPeer;
+    int filesize;
 
     byte [] requestedBitfield;
 
@@ -53,7 +54,7 @@ public class peerProcess {
       
     	fileInfo fileInfo = new fileInfo();
       this.numberOfPeer = fileInfo.peerInfoArray.size();
-      
+      this.filesize = fileInfo.FileSize;
         /*Calculate the number of piece*/
     	if((fileInfo.FileSize % fileInfo.PieceSize ) != 0 ) 
     		numberOfPiece = (fileInfo.FileSize / fileInfo.PieceSize) + 1;  
