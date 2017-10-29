@@ -26,6 +26,8 @@ public class peerProcess {
     int filesize;
 
     byte [] requestedBitfield;
+    Map<Integer,Boolean> neighborIChoke = new HashMap<Integer, Boolean>();  //the neighbor send me choke message
+                                                                     // Integer: peerID || Boolean: true(choke)
 
     /*neighbor Info*/
     List<RemotePeerInfo> NeighborPeerInfo = new ArrayList<RemotePeerInfo>();  //store all its neighbor info
@@ -39,7 +41,7 @@ public class peerProcess {
     Map<Integer,Boolean> isInterested = new HashMap<Integer, Boolean>(); //neighbor who is interested in my pieces (send me a interesting message)
                                                                         // Integer: peerID || Boolean: true(interested)
 
-    Map<Integer, Integer> downloadRate = new HashMap<Integer, Integer>(); //My downloading rate for neighbors
+    Map<Integer, Double> downloadRate = new HashMap<Integer, Double>(); //My downloading rate for neighbors
 
     Map<Integer, Socket> neighborSocket = new HashMap<Integer, Socket>();//neighbor's socket
     																	 //Integer: peerID || Socket: their socket
@@ -77,9 +79,10 @@ public class peerProcess {
     		}
     		else{
     			NeighborPeerInfo.add(peerInfoArray.get(i));  /*add new value into NeighborPeerInfo*/
+    			neighborIChoke.put(id, true);
     			isChoke.put(id, true); /*add new value into isChoke*/
     			isInterested.put(id, false); /*add new value into isInterested*/
-    			downloadRate.put(id, 0); /*set initial download rate to 0*/
+    			downloadRate.put(id, 0.0); /*set initial download rate to 0*/
     		}
     	}
 

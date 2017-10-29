@@ -1,1 +1,0 @@
-send request message in unchoke and prefere neighbor

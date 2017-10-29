@@ -1,3 +1,4 @@
+
 import java.io.*;
 import java.util.*;
 import java.util.logging.*;
@@ -200,7 +201,7 @@ public class ReceiveHandler implements Runnable {
    public void handleChokeMessage(){
     System.out.println("Peer " + peer.peerId + ": receive choke message from " + neighborId);
     peer.isChoke.put(neighborId, true);
-    peer.downloadRate.put(neighborId, 0); // set the download rate from this neighbor to 0
+    peer.downloadRate.put(neighborId, 0.0); // set the download rate from this neighbor to 0
                                                           // Because it sends me a choke message
   }
 
@@ -225,12 +226,16 @@ public class ReceiveHandler implements Runnable {
         message requestMsg = (new message()).request(desiredIndex); /*create a message object*/
         //byte[] requestMsgByteArray = Utilities.combineByteArray(requestMsg.msgLen, requestMsg.msgType);//conver object message to byte array
        // requestMsgByteArray = Utilities.combineByteArray(requestMsgByteArray, requestMsg.payload); //conver object message to byte array
+
+                /*set a start time before send data*/
+        startDownloadTime = System.currentTimeMillis();
+
         sendMessage(requestMsg.message);
 //Utilities.threadSleep(10);
         /*set requestedBitfield after send request message to advoid request same piece from different neighbor*/
         Utilities.setBitInBitfield(peer.requestedBitfield, desiredIndex);
 
-        System.out.println("Peer:" + peer.peerId + ": send request message to " + neighborId);
+        System.out.println("Peer:" + peer.peerId + ": send request message to " + neighborId + "in unchoke +++++++++++++");
     }
   }
 
@@ -361,9 +366,6 @@ public class ReceiveHandler implements Runnable {
         int numberOfPiece = peer.numberOfPiece;
         byte [] piece = Utilities.readPieceFromFile(filename, pieceSize, indexOfPiece, numberOfPiece);
 
-        /*set a start time before send data*/
-        startDownloadTime = System.currentTimeMillis();
-
         /***send the piece of data to neighbor***/
         message pieceMsg = (new message()).piece(indexOfPiece, piece); /*create a message object*/
         //byte[] pieceMsgByteArray = Utilities.combineByteArray(pieceMsg.msgLen, pieceMsg.msgType);//conver object message to byte array
@@ -378,7 +380,7 @@ public class ReceiveHandler implements Runnable {
 
   public void handlePieceMessage(byte [] playload){
     try{
-        System.out.println("Peer " + peer.peerId + ": receive piece message from " + neighborId + "=-------------------------------------");
+        System.out.println("Peer " + peer.peerId + ": receive piece message from " + neighborId);
 
         int length = playload.length;
 
@@ -398,9 +400,12 @@ public class ReceiveHandler implements Runnable {
 
         /*record the download stop time, calculate the current download rate*/
         stopDownloadTime = System.currentTimeMillis();
-        int downloadRate = piece.length / (int)(stopDownloadTime - startDownloadTime);
+        double downloadRate = piece.length / (double)(stopDownloadTime - startDownloadTime);
         peer.downloadRate.put(neighborId, downloadRate);
-
+                System.out.println("stop time: " + (stopDownloadTime ));
+                                System.out.println("stop time: " + (startDownloadTime ));
+        System.out.println("time: " + (stopDownloadTime - startDownloadTime));
+System.out.println("download Rate: " + downloadRate + "!!!!!!!!!!!!!!!!!!!!!");
         /*update my bitfield*/
         byte [] myBitfieldMap = peer.bitfieldMap.get(peer.peerId); /*get bitfield from hash table*/
         Utilities.setBitInBitfield(myBitfieldMap, indexOfPiece); /*update bitfield*/
@@ -411,7 +416,7 @@ public class ReceiveHandler implements Runnable {
         boolean completeFile = Utilities.checkForCompelteFile(myBitfieldMap, numberOfPiece);
 
         if(completeFile){
-          System.out.println("Peer   " + peer.peerId + " : I have complete file");
+          System.out.println("Peer   " + peer.peerId + " : I have complete fiiile");
         }       
 
         /*send a have message to all my neighbor*/
@@ -434,12 +439,13 @@ public class ReceiveHandler implements Runnable {
 
         if(hasInterestingPiece == false){
             /*send an not interesting message*/
-            message notInterestedMsg = (new message()).notInterested();
-            /*conver object message to byte array*/
-            //byte[] notInterestedMsgByteArray = Utilities.combineByteArray(notInterestedMsg.msgLen, notInterestedMsg.msgType);
+          message notInterestedMsg = (new message()).notInterested();
 
-            sendMessage(notInterestedMsg.message);
-            System.out.println("Peer " + peer.peerId + ": not Interested message is send to " + neighborId);
+          /*conver object message to byte array*/
+          //byte[] notInterestedMsgByteArray = Utilities.combineByteArray(notInterestedMsg.msgLen, notInterestedMsg.msgType);
+
+          sendMessage(notInterestedMsg.message);
+          System.out.println("Peer " + peer.peerId + ": not Interested message is send to " + neighborId);
         }
 
         /*If I am not choked by neighbor, request more pieces, send a request message*/
@@ -457,10 +463,14 @@ public class ReceiveHandler implements Runnable {
             message requestMsg = (new message()).request(desiredIndex); /*create a message object*/
             //byte[] requestMsgByteArray = Utilities.combineByteArray(requestMsg.msgLen, requestMsg.msgType);//conver object message to byte array
             //requestMsgByteArray = Utilities.combineByteArray(requestMsgByteArray, requestMsg.payload); //conver object message to byte array
+
+                    /*set a start time before send data*/
+        startDownloadTime = System.currentTimeMillis();
+
             sendMessage(requestMsg.message);
 
             Utilities.threadSleep(20);
-            System.out.println("Peer:" + peer.peerId + ": send request message to " + neighborId);
+            System.out.println("Peer:" + peer.peerId + ": send request message to " + neighborId + "In piece +++++++++++");
          }
 
     }catch(Exception e){

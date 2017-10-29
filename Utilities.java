@@ -141,13 +141,14 @@ public class Utilities {
   /*return false if do not have complete file*/
   /*return true if has complete file*/
   static public boolean checkForCompelteFile(byte [] bifield, int numberOfPiece){
-    boolean result = true;
-    for(int i = 0; i< numberOfPiece; i++){
-      if(isSetBitInBitfield(bifield, i) == false)
-        result = false;
-    }
 
-    return result;
+    for(int i = 0; i< numberOfPiece; i++){
+      if(isSetBitInBitfield(bifield, i) == false){
+         return false;
+      }
+    }
+    
+    return true;
   }
 
   static public void threadSleep(int s){

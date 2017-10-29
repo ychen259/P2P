@@ -38,6 +38,7 @@ public class SocketHandler implements Runnable {
 
     public void run(){
       /*build socket with all other peer*/
+      Utilities.threadSleep(500);
       peer.buildSocket();
 
       int numberOfNeighbor = peer.NeighborPeerInfo.size();
@@ -90,7 +91,7 @@ public class SocketHandler implements Runnable {
         }
       }
       
-      executor.scheduleAtFixedRate(new preferredNeighbor(peer, allOutStream), 0, OptimisticUnchokingInterval, TimeUnit.SECONDS);
+      executor.scheduleAtFixedRate(new preferredNeighbor(peer, allOutStream), 0, UnchokingInterval, TimeUnit.SECONDS);
 
     }
 
