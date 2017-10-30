@@ -3,7 +3,7 @@ import java.io.*;
 import java.util.*;
 import java.util.logging.*;
 import java.net.*;
-
+import java.util.concurrent.locks.ReentrantLock;
 /*
  * The StartRemotePeers class b PeerInfo.cfg and starts remote peer processes.
  * You must modify this program a little bit if your peer processes are written in C or C++.
@@ -21,7 +21,7 @@ public class ReceiveHandler implements Runnable {
 
   long startDownloadTime;
   long stopDownloadTime;
-
+private static ReentrantLock lock = new ReentrantLock();
   public ReceiveHandler(peerProcess peer, int neighborId, DataInputStream in, DataOutputStream out, Map<Integer,DataOutputStream> allOutStream){
     this.peer = peer;
     this.neighborId = neighborId;
@@ -30,7 +30,7 @@ public class ReceiveHandler implements Runnable {
     this.allOutStream = allOutStream;
   }
 
-  public void sendMessage(byte[] msg){
+  public synchronized void sendMessage(byte[] msg){
 	  try{
 		  //stream write the message
 		  out.write(msg);
@@ -41,7 +41,7 @@ public class ReceiveHandler implements Runnable {
 	  }
   }
 
-  public void sendMessageToAll(byte[] msg){
+  public synchronized void sendMessageToAll(byte[] msg){
 	  try{
         for(Map.Entry<Integer,DataOutputStream> entry : allOutStream.entrySet()){
             DataOutputStream outstream = entry.getValue();
@@ -137,19 +137,20 @@ public class ReceiveHandler implements Runnable {
              System.out.println(msgType[0] + "   " + e);
           }
 
-          int numberOfPiece = peer.numberOfPiece;
-          int numOfPeerHaveCompleteFile = 0;
-          for(Map.Entry<Integer,byte[]> entry : peer.bitfieldMap.entrySet()){
-            if(Utilities.checkForCompelteFile(entry.getValue(), numberOfPiece))
-            numOfPeerHaveCompleteFile++;
-          }
+          //int numberOfPiece = peer.numberOfPiece;
+          //int numOfPeerHaveCompleteFile = 0;
+          //for(Map.Entry<Integer,byte[]> entry : peer.bitfieldMap.entrySet()){
+          //  if(Utilities.checkForCompelteFile(entry.getValue(), numberOfPiece))
+          //  numOfPeerHaveCompleteFile++;
+          //}
 
-          int numberOfPeer = peer.numberOfPeer;
+          //int numberOfPeer = peer.numberOfPeer;
           /*When everyone has complete file, stop the program*/
-          if(numOfPeerHaveCompleteFile == numberOfPeer){
-            Utilities.threadSleep(1000);
-            break;
-          }
+         //if(numOfPeerHaveCompleteFile == numberOfPeer){
+           // Utilities.threadSleep(1000);
+           // break;
+         // }
+        
     }
   }
 
@@ -198,14 +199,14 @@ public class ReceiveHandler implements Runnable {
     }
   }
 
-   public void handleChokeMessage(){
+   public synchronized void handleChokeMessage(){
     System.out.println("Peer " + peer.peerId + ": receive choke message from " + neighborId);
     peer.isChoke.put(neighborId, true);
     peer.downloadRate.put(neighborId, 0.0); // set the download rate from this neighbor to 0
                                                           // Because it sends me a choke message
   }
 
-  public void handleUnchokeMessage(){
+  public  synchronized void handleUnchokeMessage(){
     System.out.println("Peer " + peer.peerId + ": receive unchoke message from " + neighborId);
     peer.isChoke.put(neighborId, false);
 
@@ -217,6 +218,10 @@ public class ReceiveHandler implements Runnable {
 
     if(completeFile){
         System.out.println("Peer" + peer.peerId + " : I have complete file111111");
+                  for(int i = 0; i < numberOfPiece; i++){
+          boolean result = Utilities.isSetBitInBitfield(myBitfieldMap, i);
+          System.out.println("piece " + i + " is set: " + result);
+        }
     }
     else{
         int desiredIndex = getDesiredIndex(myBitfieldMap, neighborBitfieldMap);
@@ -233,20 +238,23 @@ public class ReceiveHandler implements Runnable {
         sendMessage(requestMsg.message);
 //Utilities.threadSleep(10);
         /*set requestedBitfield after send request message to advoid request same piece from different neighbor*/
-        Utilities.setBitInBitfield(peer.requestedBitfield, desiredIndex);
+        synchronized(this){
+          Utilities.setBitInBitfield(peer.requestedBitfield, desiredIndex);
+        }
 
         System.out.println("Peer:" + peer.peerId + ": send request message to " + neighborId + "in unchoke +++++++++++++");
     }
   }
 
-  public int getDesiredIndex(byte [] myBitfieldMap, byte [] neighborBitfieldMap){
+  public synchronized int getDesiredIndex(byte [] myBitfieldMap, byte [] neighborBitfieldMap){
 
+    lock.lock();
     /****Get random interesting piece from neighbor ****/
     int desiredIndex;
     Random rand = new Random();
 
     boolean noDesiredIndex = Arrays.equals(myBitfieldMap, neighborBitfieldMap);
-
+  
     if(noDesiredIndex) return -1;
 
     while(true){
@@ -256,37 +264,40 @@ public class ReceiveHandler implements Runnable {
       if(Utilities.isSetBitInBitfield(myBitfieldMap, desiredIndex) == false && 
         Utilities.isSetBitInBitfield(neighborBitfieldMap, desiredIndex) == true && 
         Utilities.isSetBitInBitfield(peer.requestedBitfield, desiredIndex) == false){
-            Utilities.setBitInBitfield(peer.requestedBitfield, desiredIndex);
-                  break;
+           // synchronized(this){
+              Utilities.setBitInBitfield(peer.requestedBitfield, desiredIndex);
+              break;
+            //}
       }
     }
-
+    lock.unlock();
     return desiredIndex;
   }
 
-  public void handleInterestedMessage(){
+  public synchronized void handleInterestedMessage(){
     System.out.println("Peer " + peer.peerId + ": receive interested message from " + neighborId);
 
     /*If receive interested message, then change the isInterested talbe*/
     peer.isInterested.put(neighborId, true);
   }
 
-  public void handleNotInterestedMessage(){
+  public synchronized void handleNotInterestedMessage(){
     System.out.println("Peer " + peer.peerId + ": receive not Interested message from " + neighborId);
 
     /*If receive interested message, then change the isInterested talbe*/
     peer.isInterested.put(neighborId, false);  
   }  
 
-  public void handleHaveMessage(byte [] playload){
+  public synchronized void handleHaveMessage(byte [] playload){
     try{
        System.out.println("Peer " + peer.peerId + ": receive have message from " + neighborId);
        int indexOfPiece = Utilities.ByteArrayToint(playload);
                      
        /*update the bitfield for neighbor*/
-       byte [] neighborBitfieldMap = peer.bitfieldMap.get(neighborId); /*get bitfield from hash table*/
-       Utilities.setBitInBitfield(neighborBitfieldMap, indexOfPiece); /*update bitfield*/
-       peer.bitfieldMap.put(neighborId, neighborBitfieldMap); /*Store the bitfield back to hashmap*/
+       //byte [] neighborBitfieldMap = peer.bitfieldMap.get(neighborId); /*get bitfield from hash table*/
+       //Utilities.setBitInBitfield(neighborBitfieldMap, indexOfPiece); /*update bitfield*/
+       //peer.bitfieldMap.put(neighborId, neighborBitfieldMap); /*Store the bitfield back to hashmap*/
+       updateBitfield(neighborId, indexOfPiece);
 
        /*Check if I have that piece or not. If I do not have that piece, send interested message to neighbor*/
        byte [] myBitfieldMap = peer.bitfieldMap.get(peer.peerId);
@@ -304,7 +315,7 @@ public class ReceiveHandler implements Runnable {
     }
   }
 
-  public void handleBitfieldMessage(byte [] playload){
+  public synchronized void handleBitfieldMessage(byte [] playload){
     try{
         System.out.println("Peer " + peer.peerId + ": receive bitfield message from " + neighborId); 
 
@@ -354,7 +365,7 @@ public class ReceiveHandler implements Runnable {
     }
   }
 
-  public void handleRequestMessage(byte [] playload){
+  public synchronized void handleRequestMessage(byte [] playload){
     try{
         System.out.println("Peer " + peer.peerId + ": receive request message from " + neighborId);
 
@@ -378,7 +389,19 @@ public class ReceiveHandler implements Runnable {
     }
   }
 
-  public void handlePieceMessage(byte [] playload){
+  public synchronized byte[] updateBitfield(int peerId, int indexOfPiece){
+      lock.lock();
+
+        byte [] myBitfieldMap = peer.bitfieldMap.get(peerId); /*get bitfield from hash table*/
+        Utilities.setBitInBitfield(myBitfieldMap, indexOfPiece); /*update bitfield*/
+        peer.bitfieldMap.put(peerId, myBitfieldMap); /*Store the bitfield back to hashmap*/
+
+      lock.unlock();
+    
+        return  myBitfieldMap;
+  }
+
+  public synchronized void handlePieceMessage(byte [] playload){
     try{
         System.out.println("Peer " + peer.peerId + ": receive piece message from " + neighborId);
 
@@ -402,27 +425,17 @@ public class ReceiveHandler implements Runnable {
         stopDownloadTime = System.currentTimeMillis();
         double downloadRate = piece.length / (double)(stopDownloadTime - startDownloadTime);
         peer.downloadRate.put(neighborId, downloadRate);
-                System.out.println("stop time: " + (stopDownloadTime ));
-                                System.out.println("stop time: " + (startDownloadTime ));
-        System.out.println("time: " + (stopDownloadTime - startDownloadTime));
-System.out.println("download Rate: " + downloadRate + "!!!!!!!!!!!!!!!!!!!!!");
+
         /*update my bitfield*/
-        byte [] myBitfieldMap = peer.bitfieldMap.get(peer.peerId); /*get bitfield from hash table*/
-        Utilities.setBitInBitfield(myBitfieldMap, indexOfPiece); /*update bitfield*/
-        peer.bitfieldMap.put(peer.peerId, myBitfieldMap); /*Store the bitfield back to hashmap*/
-
-        /*If all piece have been download, then report I receive whole file*/
-
-        boolean completeFile = Utilities.checkForCompelteFile(myBitfieldMap, numberOfPiece);
-
-        if(completeFile){
-          System.out.println("Peer   " + peer.peerId + " : I have complete fiiile");
-        }       
+       // byte [] myBitfieldMap = peer.bitfieldMap.get(peer.peerId); /*get bitfield from hash table*/
+       // Utilities.setBitInBitfield(myBitfieldMap, indexOfPiece); /*update bitfield*/
+        //peer.bitfieldMap.put(peer.peerId, myBitfieldMap); /*Store the bitfield back to hashmap*/
+  
+        byte [] myBitfieldMap = updateBitfield(peer.peerId, indexOfPiece);
 
         /*send a have message to all my neighbor*/
         message haveMsg = (new message()).have(indexOfPiece); /*create a message object*/
-        //byte[] haveMsgByteArray = Utilities.combineByteArray(haveMsg.msgLen, haveMsg.msgType);//conver object message to byte array
-       // haveMsgByteArray = Utilities.combineByteArray(haveMsgByteArray, haveMsg.payload); //conver object message to byte array
+
         sendMessageToAll(haveMsg.message);
         System.out.println("Peer" + peer.peerId + " : Send have message to all neighbors");
 
@@ -447,31 +460,41 @@ System.out.println("download Rate: " + downloadRate + "!!!!!!!!!!!!!!!!!!!!!");
           sendMessage(notInterestedMsg.message);
           System.out.println("Peer " + peer.peerId + ": not Interested message is send to " + neighborId);
         }
+        else{
 
-        /*If I am not choked by neighbor, request more pieces, send a request message*/
-        boolean isChokeByNeighbor = peer.isChoke.get(neighborId);
+          /*If I am not choked by neighbor, request more pieces, send a request message*/
+          boolean isChokeByNeighbor = peer.isChoke.get(neighborId);
 
-        if(isChokeByNeighbor == false){
-            /****Get random interesting piece from neighbor ****/
-            int desiredIndex = getDesiredIndex(myBitfieldMap, neighborBitfieldMap);
-            if(desiredIndex == -1) return;
+          if(isChokeByNeighbor == false){
+              /****Get random interesting piece from neighbor ****/
+              int desiredIndex = getDesiredIndex(myBitfieldMap, neighborBitfieldMap);
+              if(desiredIndex == -1) return;
 
-            /*set requestedBitfield after send request message to advoid request same piece from different neighbor*/
-            //Utilities.setBitInBitfield(peer.requestedBitfield, desiredIndex);
+              /*set requestedBitfield after send request message to advoid request same piece from different neighbor*/
+              //Utilities.setBitInBitfield(peer.requestedBitfield, desiredIndex);
 
-            /***send the request message to neighbor***/
-            message requestMsg = (new message()).request(desiredIndex); /*create a message object*/
-            //byte[] requestMsgByteArray = Utilities.combineByteArray(requestMsg.msgLen, requestMsg.msgType);//conver object message to byte array
-            //requestMsgByteArray = Utilities.combineByteArray(requestMsgByteArray, requestMsg.payload); //conver object message to byte array
+              /***send the request message to neighbor***/
+              message requestMsg = (new message()).request(desiredIndex); /*create a message object*/
+              //byte[] requestMsgByteArray = Utilities.combineByteArray(requestMsg.msgLen, requestMsg.msgType);//conver object message to byte array
+              //requestMsgByteArray = Utilities.combineByteArray(requestMsgByteArray, requestMsg.payload); //conver object message to byte array
 
                     /*set a start time before send data*/
-        startDownloadTime = System.currentTimeMillis();
+              startDownloadTime = System.currentTimeMillis();
 
-            sendMessage(requestMsg.message);
+              sendMessage(requestMsg.message);
 
-            Utilities.threadSleep(20);
-            System.out.println("Peer:" + peer.peerId + ": send request message to " + neighborId + "In piece +++++++++++");
-         }
+              Utilities.threadSleep(10);
+              System.out.println("neighborId: " + neighborId + ": desireed index: " + desiredIndex);
+              System.out.println("Peer:" + peer.peerId + ": send request message to " + neighborId + "In piece +++++++++++");
+          }
+        }
+
+        /*If all piece have been download, then report I receive whole file*/
+        boolean completeFile = Utilities.checkForCompelteFile(myBitfieldMap, numberOfPiece);
+
+        if(completeFile){
+          System.out.println("Peer   " + peer.peerId + " : I have complete fiiile");
+        }
 
     }catch(Exception e){
         System.out.println("Error on receiving Piece message");    

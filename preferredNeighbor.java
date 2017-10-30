@@ -23,7 +23,7 @@ public class preferredNeighbor implements Runnable {
      NumberOfPreferredNeighbors = info.NumberOfPreferredNeighbors;
    }
 
-  public void sendMessage(DataOutputStream out, byte[] msg){
+  public synchronized void sendMessage(DataOutputStream out, byte[] msg){
     try{
       //stream write the message
       out.write(msg);
@@ -32,30 +32,6 @@ public class preferredNeighbor implements Runnable {
     catch(IOException ioException){
       ioException.printStackTrace();
     }
-  }
-
-  public int getDesiredIndex(byte [] myBitfieldMap, byte [] neighborBitfieldMap){
-
-    /****Get random interesting piece from neighbor ****/
-    int desiredIndex;
-    Random rand = new Random();
-    boolean hasDesiredIndex = Arrays.equals(myBitfieldMap, neighborBitfieldMap);
-
-    if(hasDesiredIndex) return -1;
-
-    while(true){
-      desiredIndex = rand.nextInt(peer.numberOfPiece); /*generate random number from 0 to (numberOfPiece-1)*/
-
-      /*Break out the loop until find a valid index*/
-      if(Utilities.isSetBitInBitfield(myBitfieldMap, desiredIndex) == false && 
-        Utilities.isSetBitInBitfield(neighborBitfieldMap, desiredIndex) == true && 
-        Utilities.isSetBitInBitfield(peer.requestedBitfield, desiredIndex) == false){
-            Utilities.setBitInBitfield(peer.requestedBitfield, desiredIndex);
-                  break;
-      }
-    }
-
-    return desiredIndex;
   }
 
     public void run(){
@@ -131,7 +107,6 @@ public class preferredNeighbor implements Runnable {
         /*If number of preferred neighbor is greater than number of neighbor*/
         /*all neighbor are optimistic neighbor*/
         else{
-
           size = sorted_downloadRate.size();
 
           /*send unchoke message to neighbor with fast download rate*/

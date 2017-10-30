@@ -75,7 +75,7 @@ public class Utilities {
 
   /*Read byte from (pieceSize*indexOfPiecce) to [(pieceSize*indexOfPiecce) + pieceSize] from file*/
   /*(pieceSize*indexOfPiecce) to [(pieceSize*indexOfPiecce) + pieceSize] == read a piece from file*/
-  static public byte[] readPieceFromFile(String filename, int pieceSize, int indexOfPiece, int numberOfPiece){
+  static synchronized public byte[] readPieceFromFile(String filename, int pieceSize, int indexOfPiece, int numberOfPiece){
 
     int length;
     byte[] result = new byte[pieceSize];
@@ -109,7 +109,7 @@ public class Utilities {
 
 
   /*Write data[] into file in particular position (start from pieceSize*indexOfPiece) */
-  static public void writePieceToFile(String filename, int pieceSize, int indexOfPiece, byte[] data, int numberOfPiece, int fileSize){
+  static synchronized public void writePieceToFile(String filename, int pieceSize, int indexOfPiece, byte[] data, int numberOfPiece, int fileSize){
     try{
       RandomAccessFile rf = new RandomAccessFile(filename, "rw");
       int filesize = (int)rf.length();
