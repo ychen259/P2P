@@ -38,7 +38,6 @@ public class SocketHandler implements Runnable {
 
     public void run(){
       /*build socket with all other peer*/
-      Utilities.threadSleep(500);
       peer.buildSocket();
 
       int numberOfNeighbor = peer.NeighborPeerInfo.size();

@@ -278,18 +278,22 @@ private static ReentrantLock lock = new ReentrantLock();
     return desiredIndex;
   }
 
-  public synchronized void handleInterestedMessage(){
+  public void handleInterestedMessage(){
     System.out.println("Peer " + peer.peerId + ": receive interested message from " + neighborId);
 
     /*If receive interested message, then change the isInterested talbe*/
-    peer.isInterested.put(neighborId, true);
+    synchronized(this){
+      peer.isInterested.put(neighborId, true);
+    }
   }
 
-  public synchronized void handleNotInterestedMessage(){
+  public void handleNotInterestedMessage(){
     System.out.println("Peer " + peer.peerId + ": receive not Interested message from " + neighborId);
 
     /*If receive interested message, then change the isInterested talbe*/
-    peer.isInterested.put(neighborId, false);  
+    synchronized(this){
+      peer.isInterested.put(neighborId, false);  
+    }
   }  
 
   public synchronized void handleHaveMessage(byte [] playload){
@@ -325,7 +329,9 @@ private static ReentrantLock lock = new ReentrantLock();
 
         /*receive bitfield and update the bitfield of my neighbor*/
         /*playload inside of message is bitmap of its neighbor*/
-        peer.bitfieldMap.put(neighborId, playload);
+        synchronized(this){
+          peer.bitfieldMap.put(neighborId, playload);
+        }
 
         /*When it receives bitfield, it also can upldate its isInterested hashmap and decide to send interested message to neighbor or not*/
         int numberOfPiece = peer.numberOfPiece;
@@ -428,7 +434,10 @@ private static ReentrantLock lock = new ReentrantLock();
         /*record the download stop time, calculate the current download rate*/
         stopDownloadTime = System.currentTimeMillis();
         double downloadRate = piece.length / (double)(stopDownloadTime - startDownloadTime);
-        peer.downloadRate.put(neighborId, downloadRate);
+
+        synchronized(this){
+          peer.downloadRate.put(neighborId, downloadRate);
+        }
 
         /*update my bitfield*/
        // byte [] myBitfieldMap = peer.bitfieldMap.get(peer.peerId); /*get bitfield from hash table*/

@@ -35,8 +35,6 @@ public class preferredNeighbor implements Runnable {
   }
 
     public void run(){
-        /*start after half second*/
-        Utilities.threadSleep(1000);
 
         /*sort the download map*/
         /*sort the download rate from high to low*/
