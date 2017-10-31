@@ -67,8 +67,6 @@ private static ReentrantLock lock = new ReentrantLock();
             /*length == length of message (first 4 bytes)*/
             /*msgType[0] == type of message (byte 5)*/
             /*playload == rest of message (all byte after byte 5)*/
-  
-
             in.readFully(lengthOfMessage, 0, lengthOfMessage.length);
 
             length = Utilities.ByteArrayToint(lengthOfMessage);
@@ -131,25 +129,35 @@ private static ReentrantLock lock = new ReentrantLock();
                   handlePieceMessage(playload);
                 }
             }
+
+
           }
           catch(Exception e){
 
              System.out.println(msgType[0] + "   " + e);
           }
 
-          //int numberOfPiece = peer.numberOfPiece;
-          //int numOfPeerHaveCompleteFile = 0;
-          //for(Map.Entry<Integer,byte[]> entry : peer.bitfieldMap.entrySet()){
-          //  if(Utilities.checkForCompelteFile(entry.getValue(), numberOfPiece))
-          //  numOfPeerHaveCompleteFile++;
-          //}
+          int numberOfPiece = peer.numberOfPiece;
+          int numOfPeerHaveCompleteFile = 0;
+          for(Map.Entry<Integer,byte[]> entry : peer.bitfieldMap.entrySet()){
+            if(Utilities.checkForCompelteFile(entry.getValue(), numberOfPiece))
+            numOfPeerHaveCompleteFile++;
+          }
 
-          //int numberOfPeer = peer.numberOfPeer;
-          /*When everyone has complete file, stop the program*/
-         //if(numOfPeerHaveCompleteFile == numberOfPeer){
-           // Utilities.threadSleep(1000);
+          int numberOfPeer = peer.numberOfPeer;
+          /*When everyone has complete file, and not input from inputstream, stop the system*/
+         if(numOfPeerHaveCompleteFile == numberOfPeer){
+            Utilities.threadSleep(3000);      
+          try{
+
+              if(in.available() == 0) {
+              break;
+            }
+          }catch(IOException e){
+            System.out.println("end of file" + e);
            // break;
-         // }
+          }
+          }
         
     }
   }
@@ -218,10 +226,6 @@ private static ReentrantLock lock = new ReentrantLock();
 
     if(completeFile){
         System.out.println("Peer" + peer.peerId + " : I have complete file111111");
-                  for(int i = 0; i < numberOfPiece; i++){
-          boolean result = Utilities.isSetBitInBitfield(myBitfieldMap, i);
-          System.out.println("piece " + i + " is set: " + result);
-        }
     }
     else{
         int desiredIndex = getDesiredIndex(myBitfieldMap, neighborBitfieldMap);
@@ -242,7 +246,7 @@ private static ReentrantLock lock = new ReentrantLock();
           Utilities.setBitInBitfield(peer.requestedBitfield, desiredIndex);
         }
 
-        System.out.println("Peer:" + peer.peerId + ": send request message to " + neighborId + "in unchoke +++++++++++++");
+        System.out.println("Peer:" + peer.peerId + ": send request message to " + neighborId);
     }
   }
 
@@ -485,7 +489,7 @@ private static ReentrantLock lock = new ReentrantLock();
 
               Utilities.threadSleep(10);
               System.out.println("neighborId: " + neighborId + ": desireed index: " + desiredIndex);
-              System.out.println("Peer:" + peer.peerId + ": send request message to " + neighborId + "In piece +++++++++++");
+              System.out.println("Peer:" + peer.peerId + ": send request message to " + neighborId);
           }
         }
 
@@ -493,7 +497,7 @@ private static ReentrantLock lock = new ReentrantLock();
         boolean completeFile = Utilities.checkForCompelteFile(myBitfieldMap, numberOfPiece);
 
         if(completeFile){
-          System.out.println("Peer   " + peer.peerId + " : I have complete fiiile");
+          System.out.println("Peer " + peer.peerId + " : I have complete file");
         }
 
     }catch(Exception e){
