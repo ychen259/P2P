@@ -18,16 +18,18 @@ public class ReceiveHandler implements Runnable {
                                                                                               /*I need this to send have message to all neighbors*/
                                                                                               /*Integer: neighbor peer ID*/
                                                                                               /*ObjectOutputStream: their output stream*/
+  Map<Integer,DataInputStream> allInputStream = new HashMap<Integer, DataInputStream>();
 
   long startDownloadTime;
   long stopDownloadTime;
 private static ReentrantLock lock = new ReentrantLock();
-  public ReceiveHandler(peerProcess peer, int neighborId, DataInputStream in, DataOutputStream out, Map<Integer,DataOutputStream> allOutStream){
+  public ReceiveHandler(peerProcess peer, int neighborId, DataInputStream in, DataOutputStream out, Map<Integer,DataOutputStream> allOutStream,Map<Integer,DataInputStream> allInputStream){
     this.peer = peer;
     this.neighborId = neighborId;
     this.out = out;
     this.in = in;
     this.allOutStream = allOutStream;
+    this.allInputStream = allInputStream;
   }
 
   public synchronized void sendMessage(byte[] msg){
@@ -133,8 +135,7 @@ private static ReentrantLock lock = new ReentrantLock();
 
           }
           catch(Exception e){
-
-             System.out.println(msgType[0] + "   " + e);
+             System.out.println(e);
           }
 
           int numberOfPiece = peer.numberOfPiece;
@@ -147,15 +148,28 @@ private static ReentrantLock lock = new ReentrantLock();
           int numberOfPeer = peer.numberOfPeer;
           /*When everyone has complete file, and not input from inputstream, stop the system*/
          if(numOfPeerHaveCompleteFile == numberOfPeer){
-            Utilities.threadSleep(3000);      
+            Utilities.threadSleep(4000);      
           try{
-
               if(in.available() == 0) {
-              break;
-            }
+                for(Map.Entry<Integer,DataOutputStream> entry : allOutStream.entrySet()){
+                  DataOutputStream outputStream = entry.getValue();
+                  outputStream.close();
+                }
+
+                for(Map.Entry<Integer,DataInputStream> entry : allInputStream.entrySet()){
+                  DataInputStream inputStream = entry.getValue();
+                  inputStream.close();
+                }
+
+                for(Map.Entry<Integer,Socket> entry : peer.neighborSocket.entrySet()){
+                  Socket socket = entry.getValue();
+                  socket.close();
+                }
+
+                System.exit(0);
+              }
           }catch(IOException e){
-            System.out.println("end of file" + e);
-           // break;
+            System.out.println(e);
           }
           }
         
@@ -464,6 +478,7 @@ private static ReentrantLock lock = new ReentrantLock();
         }
 
         if(hasInterestingPiece == false){
+
             /*send an not interesting message*/
           message notInterestedMsg = (new message()).notInterested();
 
@@ -471,7 +486,7 @@ private static ReentrantLock lock = new ReentrantLock();
           //byte[] notInterestedMsgByteArray = Utilities.combineByteArray(notInterestedMsg.msgLen, notInterestedMsg.msgType);
 
           sendMessage(notInterestedMsg.message);
-          System.out.println("Peer " + peer.peerId + ": not Interested message is send to " + neighborId);
+          System.out.println("Peer " + peer.peerId + ": not Interested message is send to " + neighborId + "!!!!!!!!!!");
         }
         else{
 

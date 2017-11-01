@@ -82,16 +82,16 @@ public class SocketHandler implements Runnable {
 
           System.out.println("Peer " + peer.peerId + ": handshake message send to " + neighborId);
           /*****************************************Receive all kinds of message********************************************/
-          Thread receiveHandler = new Thread(new ReceiveHandler(peer, neighborId, in, out, allOutStream));
+          Thread receiveHandler = new Thread(new ReceiveHandler(peer, neighborId, in, out, allOutStream, allInputStream));
           receiveHandler.start();
         }
         catch(Exception e){
           System.out.println(e);
         }
       }
-      
+      Utilities.threadSleep(1000);
       executor.scheduleAtFixedRate(new preferredNeighbor(peer, allOutStream), 0, UnchokingInterval, TimeUnit.SECONDS);
-
+      executor.scheduleAtFixedRate(new OptimisticalNeighbor(peer, allOutStream), 0, OptimisticUnchokingInterval, TimeUnit.SECONDS);
     }
 
 }

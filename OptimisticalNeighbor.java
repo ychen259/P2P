@@ -3,27 +3,26 @@ import java.util.*;
 import java.util.logging.*;
 import java.net.*;
 import java.util.Map.Entry;
+import java.util.concurrent.*;
 
 public class OptimisticalNeighbor implements Runnable {
    peerProcess peer;
+ 
+
 
    Map<Integer, DataOutputStream> allOutStream = new HashMap<Integer, DataOutputStream>(); /*store all output stream*/
                                                                                               /*I need this to send have message to all neighbors*/
                                                                                               /*Integer: neighbor peer ID*/
                                                                                               /*ObjectOutputStream: their output stream*/
-
-  int NumberOfPreferredNeighbors;
-
-
+  ScheduledFuture<?> stop;
+  //ScheduledExecutorService  executor;
    public OptimisticalNeighbor(peerProcess peer, Map<Integer,DataOutputStream> allOutStream){
      this.peer = peer;
      this.allOutStream = allOutStream;
-
-     fileInfo info = new fileInfo();
-     NumberOfPreferredNeighbors = info.NumberOfPreferredNeighbors;
+     //this.executor = executor;
    }
 
-  public void sendMessage(DataOutputStream out, byte[] msg){
+  public synchronized void sendMessage(DataOutputStream out, byte[] msg){
     try{
       //stream write the message
       out.write(msg);
@@ -34,7 +33,58 @@ public class OptimisticalNeighbor implements Runnable {
     }
   }
 
+  public int generateARandomOptimisticalNeighbor(peerProcess peer){
+    int peerId;
+
+    boolean flag = true; /*flag to check if there is a neighbor is choke and interestd in me*/
+
+    /*if there is not choke neighbor, then return -1*/
+    for(int i = 0; i < peer.neighborIChoke.size(); i++){
+      int id = (int)peer.neighborIChoke.keySet().toArray()[i];
+      /*If there is a choke neighbor, set the flag*/
+      if((boolean)peer.neighborIChoke.get(id) == true &&
+        (boolean)peer.isInterested.get(id) == true){
+        flag = false;
+        break;
+      }
+    }
+
+    if(flag) return -1;
+
+    while(true){
+      Random generator = new Random();
+      int size = peer.neighborIChoke.size();
+      int index = generator.nextInt(size); /*generate a number from 0 to size-1*/  
+      peerId = (int)(peer.neighborIChoke.keySet().toArray()[index]);
+
+      boolean isChokeByMe = peer.neighborIChoke.get(peerId);
+      boolean isInterestedMe = peer.isInterested.get(peerId);
+
+      /*pick the choke neighbor and interested neighbor*/
+      if(isChokeByMe == true && isInterestedMe == true){
+        break;
+      }
+    }
+
+    return peerId;
+  }
+
   public void run(){
+
+    /*if(peer.finish){
+      System.exit(0);
+    }*/
+
+    int optimisticalId = generateARandomOptimisticalNeighbor(peer);
+    if(optimisticalId == -1) return;
+    DataOutputStream out = allOutStream.get(optimisticalId);
+
+    message unchokeMsg = (new message()).unchoke();
+
+    /*send a unchoke message*/
+    sendMessage(out, unchokeMsg.message);
+
+    System.out.println("Peer " + peer.peerId + ": unchoke message send to " + optimisticalId + "in optimistical!!!!!!!!!!!!");
 
   }
 }

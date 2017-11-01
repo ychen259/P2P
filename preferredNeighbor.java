@@ -3,6 +3,7 @@ import java.util.*;
 import java.util.logging.*;
 import java.net.*;
 import java.util.Map.Entry;
+import java.util.concurrent.*;
 
 public class preferredNeighbor implements Runnable {
    peerProcess peer;
@@ -13,12 +14,12 @@ public class preferredNeighbor implements Runnable {
                                                                                               /*ObjectOutputStream: their output stream*/
 
   int NumberOfPreferredNeighbors;
-
+ // ScheduledExecutorService  executor;
 
    public preferredNeighbor(peerProcess peer, Map<Integer,DataOutputStream> allOutStream){
      this.peer = peer;
      this.allOutStream = allOutStream;
-
+     //this.executor = executor;
      fileInfo info = new fileInfo();
      NumberOfPreferredNeighbors = info.NumberOfPreferredNeighbors;
    }
@@ -35,6 +36,10 @@ public class preferredNeighbor implements Runnable {
   }
 
     public void run(){
+
+        /*if(peer.finish){
+          System.exit(0);
+        }*/
 
         /*sort the download map*/
         /*sort the download rate from high to low*/
@@ -62,8 +67,9 @@ public class preferredNeighbor implements Runnable {
                 boolean neighborIsChoke = peer.neighborIChoke.get(neighborId);
                 boolean neighborIsInterested = peer.isInterested.get(neighborId);
                 DataOutputStream out = allOutStream.get(neighborId);
-                if(neighborIsInterested == false){
-
+                if(neighborIsInterested == false && neighborIsChoke == false){
+                    peer.neighborIChoke.put(neighborId, true);
+                    
                     message chokeMsg = (new message()).choke();
 
                     /*send a unchoke message*/
@@ -74,8 +80,12 @@ public class preferredNeighbor implements Runnable {
                     continue;
                 }
 
+                if(neighborIsInterested == false && neighborIsChoke == true) continue;
+
                 numberOfNeighborIsPick++;
                 if(numberOfNeighborIsPick > NumberOfPreferredNeighbors){
+                    peer.neighborIChoke.put(neighborId, true);
+
                     message chokeMsg = (new message()).choke();
 
                     /*send a unchoke message*/
@@ -88,10 +98,11 @@ public class preferredNeighbor implements Runnable {
                   /*If neighbor is unchoke already, we do not have to send unchoke message*/
                   /*We just need to send request message*/
                   if(neighborIsChoke == false){
+                      peer.neighborIChoke.put(neighborId, false);
                       continue;
                   } 
 
-
+                  peer.neighborIChoke.put(neighborId, false);
                   message unchokeMsg = (new message()).unchoke();
 
                   /*send a unchoke message*/
@@ -114,16 +125,27 @@ public class preferredNeighbor implements Runnable {
                 boolean neighborIsChoke = peer.neighborIChoke.get(neighborId);
                 boolean neighborIsInterested = peer.isInterested.get(neighborId);
 
-                if(neighborIsInterested == false) continue;
+                DataOutputStream out = allOutStream.get(neighborId);
 
-                /*If neighbor is unchoke already, we do not have to send unchoke message*/
-                /*send a request message*/
-                if(neighborIsChoke == false){
+                if(neighborIsInterested == false && neighborIsChoke == false){
+                    peer.neighborIChoke.put(neighborId, true);
+
+                    message chokeMsg = (new message()).choke();
+
+                    /*send a unchoke message*/
+                    sendMessage(out, chokeMsg.message);
+
+                    System.out.println("Peer " + peer.peerId + ": choke message send to " + neighborId + "!!!!!!!!!!!!!!!!!!!!");
                     continue;
                 }
 
+                
+                if(neighborIsInterested == false) continue;
 
-                DataOutputStream out = allOutStream.get(neighborId);
+                /*If neighbor is unchoke already, we do not have to send unchoke message*/
+                if(neighborIsChoke == false){
+                    continue;
+                }
 
                 message unchokeMsg = (new message()).unchoke();
 
