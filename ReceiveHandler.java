@@ -148,9 +148,11 @@ private static ReentrantLock lock = new ReentrantLock();
           int numberOfPeer = peer.numberOfPeer;
           /*When everyone has complete file, and not input from inputstream, stop the system*/
          if(numOfPeerHaveCompleteFile == numberOfPeer){
+          System.out.println("CCCCCCComplete file!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
             Utilities.threadSleep(4000);      
           try{
               if(in.available() == 0) {
+                          System.out.println("end of for loop~~~~~!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
                 for(Map.Entry<Integer,DataOutputStream> entry : allOutStream.entrySet()){
                   DataOutputStream outputStream = entry.getValue();
                   outputStream.close();

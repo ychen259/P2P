@@ -79,6 +79,8 @@ public class OptimisticalNeighbor implements Runnable {
     if(optimisticalId == -1) return;
     DataOutputStream out = allOutStream.get(optimisticalId);
 
+    peer.neighborIChoke.put(optimisticalId, false);
+
     message unchokeMsg = (new message()).unchoke();
 
     /*send a unchoke message*/

@@ -67,6 +67,7 @@ public class preferredNeighbor implements Runnable {
                 boolean neighborIsChoke = peer.neighborIChoke.get(neighborId);
                 boolean neighborIsInterested = peer.isInterested.get(neighborId);
                 DataOutputStream out = allOutStream.get(neighborId);
+
                 if(neighborIsInterested == false && neighborIsChoke == false){
                     peer.neighborIChoke.put(neighborId, true);
                     
@@ -75,12 +76,12 @@ public class preferredNeighbor implements Runnable {
                     /*send a unchoke message*/
                     sendMessage(out, chokeMsg.message);
 
-                    System.out.println("Peer " + peer.peerId + ": choke message send to " + neighborId);
+                    System.out.println("Peer " + peer.peerId + ": choke message send to " + neighborId + "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
 
                     continue;
                 }
 
-                if(neighborIsInterested == false && neighborIsChoke == true) continue;
+                if(neighborIsInterested == false) continue;
 
                 numberOfNeighborIsPick++;
                 if(numberOfNeighborIsPick > NumberOfPreferredNeighbors){
@@ -91,14 +92,14 @@ public class preferredNeighbor implements Runnable {
                     /*send a unchoke message*/
                     sendMessage(out, chokeMsg.message);
 
-                    System.out.println("Peer " + peer.peerId + ": choke message send to " + neighborId);
+                    System.out.println("Peer " + peer.peerId + ": choke message send to " + neighborId + "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
 
                 }
                 else{
                   /*If neighbor is unchoke already, we do not have to send unchoke message*/
                   /*We just need to send request message*/
                   if(neighborIsChoke == false){
-                      peer.neighborIChoke.put(neighborId, false);
+                      //peer.neighborIChoke.put(neighborId, false);
                       continue;
                   } 
 
@@ -108,7 +109,7 @@ public class preferredNeighbor implements Runnable {
                   /*send a unchoke message*/
                   sendMessage(out, unchokeMsg.message);
 
-                  System.out.println("Peer " + peer.peerId + ": unchoke message send to " + neighborId);
+                  System.out.println("Peer " + peer.peerId + ": unchoke message send to " + neighborId + "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
                 }
           }
 
