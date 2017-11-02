@@ -80,6 +80,10 @@ public class SocketHandler implements Runnable {
           out.write(handshakeMsgByteArray);
           out.flush();
 
+          //String filename = "./peer_" + peer.peerId + "/log_peer_" + peer.peerId + ".log";
+          //String context = "Peer " + peer.peerId + ": handshake message send to " + neighborId;
+          //Utilities.writeToFile(filename, context);
+
           System.out.println("Peer " + peer.peerId + ": handshake message send to " + neighborId);
           /*****************************************Receive all kinds of message********************************************/
           Thread receiveHandler = new Thread(new ReceiveHandler(peer, neighborId, in, out, allOutStream, allInputStream));

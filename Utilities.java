@@ -1,6 +1,7 @@
 import java.io.*;
 import java.nio.*;
 import java.util.*;
+import java.text.*;
 
 public class Utilities {  
   /*result[0] store left most byte of number*/
@@ -158,6 +159,73 @@ public class Utilities {
     catch(Exception e){
       System.out.println(e);
     }
+  }
+
+static public void writeToFile(String filename, String context){
+      BufferedWriter bw = null;
+      FileWriter fw = null;
+      DateFormat df = new SimpleDateFormat("dd/MM/yy HH:mm:ss");
+      Date dateobj = new Date();
+
+      try {
+
+          String data = context;
+
+          File file = new File(filename);
+
+          // if file doesnt exists, then create it
+          if (!file.exists()) {
+             file.createNewFile();
+          }
+ 
+          // true = append file
+          fw = new FileWriter(file.getAbsoluteFile(), true);
+          bw = new BufferedWriter(fw);
+          bw.write("[" + df.format(dateobj) + "] ");
+          bw.write(data);
+          bw.write(System.getProperty("line.separator"));
+
+      }catch (IOException e) {
+
+          e.printStackTrace();
+
+      }finally {
+
+          try {
+
+              if (bw != null)
+                bw.close();
+
+              if (fw != null)
+                fw.close();
+  
+          } catch (IOException ex) {
+
+              ex.printStackTrace();
+
+          }
+      }
+  }
+
+  static public boolean equalLists(List<Integer> one, List<Integer> two){     
+    if (one == null && two == null){
+        return true;
+    }
+
+    if((one == null && two != null) 
+      || one != null && two == null
+      || one.size() != two.size()){
+        return false;
+    }
+
+    //to avoid messing the order of the lists we will use a copy
+    //as noted in comments by A. R. S.
+    one = new ArrayList<Integer>(one); 
+    two = new ArrayList<Integer>(two);   
+
+    Collections.sort(one);
+    Collections.sort(two);      
+    return one.equals(two);
   }
 
   /*For testing*/

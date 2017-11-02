@@ -57,10 +57,14 @@ public class preferredNeighbor implements Runnable {
             sorted_downloadRate.put(entry.getKey(), entry.getValue());
         }
         /*sort the download map end here*/
+    
 
         int size;
         if(sorted_downloadRate.size() > NumberOfPreferredNeighbors){
           int numberOfNeighborIsPick = 0;
+
+          List<Integer> new_preferred_neighbors = new ArrayList<Integer>();
+
           /*send unchoke message to neighbor who is interested in me and has fast download rate*/
           for(int i = 0; i < sorted_downloadRate.size(); i++){
                 int neighborId = (int)(sorted_downloadRate.keySet().toArray()[i]);
@@ -76,7 +80,7 @@ public class preferredNeighbor implements Runnable {
                     /*send a unchoke message*/
                     sendMessage(out, chokeMsg.message);
 
-                    System.out.println("Peer " + peer.peerId + ": choke message send to " + neighborId + "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+                    System.out.println("Peer " + peer.peerId + ": choke message send to " + neighborId);
 
                     continue;
                 }
@@ -92,10 +96,11 @@ public class preferredNeighbor implements Runnable {
                     /*send a unchoke message*/
                     sendMessage(out, chokeMsg.message);
 
-                    System.out.println("Peer " + peer.peerId + ": choke message send to " + neighborId + "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+                    System.out.println("Peer " + peer.peerId + ": choke message send to " + neighborId);
 
                 }
                 else{
+                  new_preferred_neighbors.add(neighborId);
                   /*If neighbor is unchoke already, we do not have to send unchoke message*/
                   /*We just need to send request message*/
                   if(neighborIsChoke == false){
@@ -109,15 +114,30 @@ public class preferredNeighbor implements Runnable {
                   /*send a unchoke message*/
                   sendMessage(out, unchokeMsg.message);
 
-                  System.out.println("Peer " + peer.peerId + ": unchoke message send to " + neighborId + "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+                  System.out.println("Peer " + peer.peerId + ": unchoke message send to " + neighborId);
                 }
           }
 
+          if(Utilities.equalLists(new_preferred_neighbors, peer.preferred_neighbors) == false){
+              String filename = "./peer_" + peer.peerId + "/log_peer_" + peer.peerId + ".log";
+              String context = "Peer " + peer.peerId + ": has the preferred neighbors";
+              for(int i = 0; i < new_preferred_neighbors.size(); i++){
+                 context = context + " " + new_preferred_neighbors.get(i);
+
+                 if(i != (new_preferred_neighbors.size()-1)){
+                  context += ",";
+                 }
+              }
+              peer.preferred_neighbors = new_preferred_neighbors;
+              Utilities.writeToFile(filename, context);
+          }
         }
+
         /*If number of preferred neighbor is greater than number of neighbor*/
         /*all neighbor are optimistic neighbor*/
         else{
           size = sorted_downloadRate.size();
+          List<Integer> new_preferred_neighbors = new ArrayList<Integer>();
 
           /*send unchoke message to neighbor with fast download rate*/
           for(int i = 0; i < size; i++){
@@ -143,9 +163,11 @@ public class preferredNeighbor implements Runnable {
                 
                 if(neighborIsInterested == false) continue;
 
+                new_preferred_neighbors.add(neighborId);
+
                 /*If neighbor is unchoke already, we do not have to send unchoke message*/
                 if(neighborIsChoke == false){
-                    continue;
+                   continue;
                 }
 
                 message unchokeMsg = (new message()).unchoke();
@@ -161,6 +183,22 @@ public class preferredNeighbor implements Runnable {
 
                 System.out.println("Peer " + peer.peerId + ": unchoke message send to " + neighborId);
           }  
+
+          if(Utilities.equalLists(new_preferred_neighbors, peer.preferred_neighbors) == false){
+              String filename = "./peer_" + peer.peerId + "/log_peer_" + peer.peerId + ".log";
+              String context = "Peer " + peer.peerId + ": has the preferred neighbors";
+
+              for(int i = 0; i < new_preferred_neighbors.size(); i++){
+                 context = context + " " + new_preferred_neighbors.get(i);
+
+                 if(i != (new_preferred_neighbors.size()-1)){
+                    context += ",";
+                 }
+              }
+
+              peer.preferred_neighbors = new_preferred_neighbors;
+              Utilities.writeToFile(filename, context);
+          }       
 
         }
 

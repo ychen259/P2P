@@ -29,6 +29,10 @@ public class peerProcess {
     Map<Integer,Boolean> neighborIChoke = new HashMap<Integer, Boolean>();  //the neighbor send me choke message
                                                                      // Integer: peerID || Boolean: true(choke)
 
+    List<Integer> preferred_neighbors = new ArrayList<Integer>();
+
+    int optimistically_neighbor = -1;
+
     /*neighbor Info*/
     List<RemotePeerInfo> NeighborPeerInfo = new ArrayList<RemotePeerInfo>();  //store all its neighbor info
                                                                               //RemotePeerInfo has variable
@@ -144,7 +148,11 @@ public class peerProcess {
                  Socket socket = new Socket(neighborHost, neighborPort);
                  neighborSocket.put(neighborId, socket);
                  //System.out.println(socket);
-                 System.out.println("peer ID: " + peerId + " send TCP request to peerId: " + neighborId);
+
+                 String filename = "./peer_" + peerId + "/log_peer_" + peerId + ".log";
+                 String context = "Peer " + peerId + " makes a connection to Peer " + neighborId;
+                 Utilities.writeToFile(filename, context);
+                 System.out.println("Peer " + peerId + " makes a connection to Peer " + neighborId);
             }
             catch(Exception e){
             	System.out.println(e);
@@ -154,6 +162,11 @@ public class peerProcess {
               //System.out.println("peer ID: " + peerId + " listen to " + port);
         	  try{
                 Socket socket = serverSocket.accept();
+
+                 String filename = "./peer_" + peerId + "/log_peer_" + peerId + ".log";
+                 String context = "Peer " + peerId + " is connected from Peer " + neighborId;
+                 Utilities.writeToFile(filename, context);
+
                 neighborSocket.put(neighborId, socket);
                 //System.out.println(socket);
               }

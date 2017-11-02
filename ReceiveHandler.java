@@ -224,15 +224,23 @@ private static ReentrantLock lock = new ReentrantLock();
   }
 
    public synchronized void handleChokeMessage(){
-    System.out.println("Peer " + peer.peerId + ": receive choke message from " + neighborId);
-    peer.isChoke.put(neighborId, true);
-    peer.downloadRate.put(neighborId, 0.0); // set the download rate from this neighbor to 0
+
+      System.out.println("Peer " + peer.peerId + ": receive choke message from " + neighborId);
+      peer.isChoke.put(neighborId, true);
+      peer.downloadRate.put(neighborId, 0.0); // set the download rate from this neighbor to 0
                                                           // Because it sends me a choke message
+      String filename = "./peer_" + peer.peerId + "/log_peer_" + peer.peerId + ".log";
+      String context = "Peer " + peer.peerId + " is choked by Peer " + neighborId;
+      Utilities.writeToFile(filename, context);
   }
 
   public  synchronized void handleUnchokeMessage(){
     System.out.println("Peer " + peer.peerId + ": receive unchoke message from " + neighborId);
     peer.isChoke.put(neighborId, false);
+
+    String filename = "./peer_" + peer.peerId + "/log_peer_" + peer.peerId + ".log";
+    String context = "Peer " + peer.peerId + " is unchoked by Peer " + neighborId;
+    Utilities.writeToFile(filename, context);
 
     byte [] neighborBitfieldMap = peer.bitfieldMap.get(neighborId);
     byte [] myBitfieldMap = peer.bitfieldMap.get(peer.peerId);
@@ -297,6 +305,10 @@ private static ReentrantLock lock = new ReentrantLock();
   public void handleInterestedMessage(){
     System.out.println("Peer " + peer.peerId + ": receive interested message from " + neighborId);
 
+    String filename = "./peer_" + peer.peerId + "/log_peer_" + peer.peerId + ".log";
+    String context = "Peer " + peer.peerId + " received the 'interested' message from " + neighborId;
+    Utilities.writeToFile(filename, context);
+
     /*If receive interested message, then change the isInterested talbe*/
     synchronized(this){
       peer.isInterested.put(neighborId, true);
@@ -305,6 +317,10 @@ private static ReentrantLock lock = new ReentrantLock();
 
   public void handleNotInterestedMessage(){
     System.out.println("Peer " + peer.peerId + ": receive not Interested message from " + neighborId);
+
+    String filename = "./peer_" + peer.peerId + "/log_peer_" + peer.peerId + ".log";
+    String context = "Peer " + peer.peerId + " received the 'not interested' message from " + neighborId;
+    Utilities.writeToFile(filename, context);
 
     /*If receive interested message, then change the isInterested talbe*/
     synchronized(this){
@@ -316,7 +332,11 @@ private static ReentrantLock lock = new ReentrantLock();
     try{
        System.out.println("Peer " + peer.peerId + ": receive have message from " + neighborId);
        int indexOfPiece = Utilities.ByteArrayToint(playload);
-                     
+  
+       String filename = "./peer_" + peer.peerId + "/log_peer_" + peer.peerId + ".log";
+       String context = "Peer " + peer.peerId + " received the 'have' message from Peer " + neighborId + " for the piece " + indexOfPiece;
+       Utilities.writeToFile(filename, context);
+
        /*update the bitfield for neighbor*/
        //byte [] neighborBitfieldMap = peer.bitfieldMap.get(neighborId); /*get bitfield from hash table*/
        //Utilities.setBitInBitfield(neighborBitfieldMap, indexOfPiece); /*update bitfield*/
@@ -455,6 +475,10 @@ private static ReentrantLock lock = new ReentrantLock();
           peer.downloadRate.put(neighborId, downloadRate);
         }
 
+        filename = "./peer_" + peer.peerId + "/log_peer_" + peer.peerId + ".log";
+        String context = "Peer " + peer.peerId + " has downloaded the piece " + indexOfPiece + " from " + neighborId;
+        Utilities.writeToFile(filename, context);
+
         /*update my bitfield*/
        // byte [] myBitfieldMap = peer.bitfieldMap.get(peer.peerId); /*get bitfield from hash table*/
        // Utilities.setBitInBitfield(myBitfieldMap, indexOfPiece); /*update bitfield*/
@@ -523,6 +547,8 @@ private static ReentrantLock lock = new ReentrantLock();
         boolean completeFile = Utilities.checkForCompelteFile(myBitfieldMap, numberOfPiece);
 
         if(completeFile){
+          context = "Peer " + peer.peerId + " has downloaded the complete file";
+          Utilities.writeToFile(filename, context);
           System.out.println("Peer " + peer.peerId + " : I have complete file");
         }
 
