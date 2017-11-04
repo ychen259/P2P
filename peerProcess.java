@@ -25,6 +25,7 @@ public class peerProcess {
     int numberOfPeer;
     int filesize;
 
+
     byte [] requestedBitfield;
     Map<Integer,Boolean> neighborIChoke = new HashMap<Integer, Boolean>();  //the neighbor send me choke message
                                                                      // Integer: peerID || Boolean: true(choke)

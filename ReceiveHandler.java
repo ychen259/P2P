@@ -146,9 +146,9 @@ private static ReentrantLock lock = new ReentrantLock();
           }
 
           int numberOfPeer = peer.numberOfPeer;
+
           /*When everyone has complete file, and not input from inputstream, stop the system*/
          if(numOfPeerHaveCompleteFile == numberOfPeer){
-          System.out.println("CCCCCCComplete file!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
             Utilities.threadSleep(4000);      
           try{
               if(in.available() == 0) {
@@ -249,7 +249,7 @@ private static ReentrantLock lock = new ReentrantLock();
     boolean completeFile = Utilities.checkForCompelteFile(myBitfieldMap, numberOfPiece);
 
     if(completeFile){
-        System.out.println("Peer" + peer.peerId + " : I have complete file111111");
+        //System.out.println("Peer" + peer.peerId + " : I have complete file");
     }
     else{
         int desiredIndex = getDesiredIndex(myBitfieldMap, neighborBitfieldMap);
@@ -264,11 +264,11 @@ private static ReentrantLock lock = new ReentrantLock();
         startDownloadTime = System.currentTimeMillis();
 
         sendMessage(requestMsg.message);
-//Utilities.threadSleep(10);
+        Utilities.threadSleep(10);
         /*set requestedBitfield after send request message to advoid request same piece from different neighbor*/
-        synchronized(this){
+       /*synchronized(this){
           Utilities.setBitInBitfield(peer.requestedBitfield, desiredIndex);
-        }
+        }*/
 
         System.out.println("Peer:" + peer.peerId + ": send request message to " + neighborId);
     }
@@ -438,6 +438,13 @@ private static ReentrantLock lock = new ReentrantLock();
   public synchronized byte[] updateBitfield(int peerId, int indexOfPiece){
       lock.lock();
 
+       /*if(peerId == peer.peerId){
+       String filename = "./peer_" + peer.peerId + "/log_peer_" + peer.peerId + ".log";
+       String context = ("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+       Utilities.writeToFile(filename, context);
+       }*/
+       Utilities.threadSleep(50);
+
         byte [] myBitfieldMap = peer.bitfieldMap.get(peerId); /*get bitfield from hash table*/
         Utilities.setBitInBitfield(myBitfieldMap, indexOfPiece); /*update bitfield*/
         peer.bitfieldMap.put(peerId, myBitfieldMap); /*Store the bitfield back to hashmap*/
@@ -479,12 +486,16 @@ private static ReentrantLock lock = new ReentrantLock();
         String context = "Peer " + peer.peerId + " has downloaded the piece " + indexOfPiece + " from " + neighborId;
         Utilities.writeToFile(filename, context);
 
-        /*update my bitfield*/
-       // byte [] myBitfieldMap = peer.bitfieldMap.get(peer.peerId); /*get bitfield from hash table*/
-       // Utilities.setBitInBitfield(myBitfieldMap, indexOfPiece); /*update bitfield*/
-        //peer.bitfieldMap.put(peer.peerId, myBitfieldMap); /*Store the bitfield back to hashmap*/
-  
-        byte [] myBitfieldMap = updateBitfield(peer.peerId, indexOfPiece);
+        byte [] myBitfieldMap;
+        boolean completeFile;
+        synchronized(this){
+          lock.lock();
+
+          myBitfieldMap = updateBitfield(peer.peerId, indexOfPiece);
+          completeFile = Utilities.checkForCompelteFile(myBitfieldMap, numberOfPiece);
+
+          lock.unlock();
+        }
 
         /*send a have message to all my neighbor*/
         message haveMsg = (new message()).have(indexOfPiece); /*create a message object*/
@@ -544,7 +555,6 @@ private static ReentrantLock lock = new ReentrantLock();
         }
 
         /*If all piece have been download, then report I receive whole file*/
-        boolean completeFile = Utilities.checkForCompelteFile(myBitfieldMap, numberOfPiece);
 
         if(completeFile){
           context = "Peer " + peer.peerId + " has downloaded the complete file";
