@@ -353,6 +353,8 @@ private static ReentrantLock lock = new ReentrantLock();
 
          sendMessage(interestedMsg.message);
          System.out.println("Peer " + peer.peerId + " : send interested message to " + neighborId);
+
+         peer.neighborIInterested.put(neighborId, true);
        }
     }catch(Exception e){
       System.out.println("Error on receiving Have message");
@@ -391,6 +393,8 @@ private static ReentrantLock lock = new ReentrantLock();
 
             sendMessage(interestedMsg.message);
             System.out.println("Peer " + myId + ": Interested message is send to " + neighborId);
+
+            peer.neighborIInterested.put(neighborId, true);
             break;
           }
         }
@@ -404,6 +408,8 @@ private static ReentrantLock lock = new ReentrantLock();
 
           sendMessage(notInterestedMsg.message);
           System.out.println("Peer " + myId + ": not Interested message is send to " + neighborId);
+
+          peer.neighborIInterested.put(neighborId, false);
         }
     }
     catch(Exception e){
@@ -523,6 +529,8 @@ private static ReentrantLock lock = new ReentrantLock();
           //byte[] notInterestedMsgByteArray = Utilities.combineByteArray(notInterestedMsg.msgLen, notInterestedMsg.msgType);
 
           sendMessage(notInterestedMsg.message);
+
+          peer.neighborIInterested.put(neighborId, false);
           System.out.println("Peer " + peer.peerId + ": not Interested message is send to " + neighborId + "!!!!!!!!!!");
         }
         else{
@@ -560,6 +568,26 @@ private static ReentrantLock lock = new ReentrantLock();
           context = "Peer " + peer.peerId + " has downloaded the complete file";
           Utilities.writeToFile(filename, context);
           System.out.println("Peer " + peer.peerId + " : I have complete file");
+
+          /*If I have complete file, send not interested message to the one I am interested before*/
+          for(Map.Entry<Integer,Boolean> entry : peer.neighborIInterested.entrySet()){
+            int id = entry.getKey();
+            boolean neighborIInterested = entry.getValue();
+
+            if(neighborIInterested){
+            	message notInterestedMsg = (new message()).notInterested();
+
+            	try{
+                  DataOutputStream out = allOutStream.get(id);
+                  out.write(notInterestedMsg.message);
+                  out.flush();
+            	}
+            	catch(Exception e){
+            		System.out.println(e);
+            	}
+
+            }
+          }
         }
 
     }catch(Exception e){

@@ -30,6 +30,9 @@ public class peerProcess {
     Map<Integer,Boolean> neighborIChoke = new HashMap<Integer, Boolean>();  //the neighbor send me choke message
                                                                      // Integer: peerID || Boolean: true(choke)
 
+    Map<Integer,Boolean> neighborIInterested = new HashMap<Integer, Boolean>();  //the neighbor send me choke message
+                                                                     // Integer: peerID || Boolean: true(choke)
+
     List<Integer> preferred_neighbors = new ArrayList<Integer>();
 
     int optimistically_neighbor = -1;
@@ -85,6 +88,7 @@ public class peerProcess {
     		else{
     			NeighborPeerInfo.add(peerInfoArray.get(i));  /*add new value into NeighborPeerInfo*/
     			neighborIChoke.put(id, true);
+          neighborIInterested.put(id, false);
     			isChoke.put(id, true); /*add new value into isChoke*/
     			isInterested.put(id, false); /*add new value into isInterested*/
     			downloadRate.put(id, 0.0); /*set initial download rate to 0*/
