@@ -3,6 +3,7 @@ import java.io.*;
 import java.util.*;
 import java.util.logging.*;
 import java.net.*;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 /*
  * The StartRemotePeers class b PeerInfo.cfg and starts remote peer processes.
@@ -22,7 +23,7 @@ public class ReceiveHandler implements Runnable {
 
   long startDownloadTime;
   long stopDownloadTime;
-private static ReentrantLock lock = new ReentrantLock();
+private static Lock lock = new ReentrantLock();
   public ReceiveHandler(peerProcess peer, int neighborId, DataInputStream in, DataOutputStream out, Map<Integer,DataOutputStream> allOutStream,Map<Integer,DataInputStream> allInputStream){
     this.peer = peer;
     this.neighborId = neighborId;
@@ -493,7 +494,7 @@ private static ReentrantLock lock = new ReentrantLock();
         Utilities.writeToFile(filename, context);
 
         byte [] myBitfieldMap;
-        boolean completeFile;
+        boolean completeFile = false;
         synchronized(this){
           lock.lock();
 
