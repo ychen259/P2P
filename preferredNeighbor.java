@@ -89,6 +89,8 @@ public class preferredNeighbor implements Runnable {
 
                 numberOfNeighborIsPick++;
                 if(numberOfNeighborIsPick > NumberOfPreferredNeighbors){
+                    if(neighborId == peer.optimistically_neighbor) continue;
+                    
                     peer.neighborIChoke.put(neighborId, true);
 
                     message chokeMsg = (new message()).choke();

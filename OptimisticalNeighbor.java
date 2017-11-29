@@ -82,6 +82,7 @@ public class OptimisticalNeighbor implements Runnable {
         String filename = "./peer_" + peer.peerId + "/log_peer_" + peer.peerId + ".log";
         String context = "Peer " + peer.peerId + " has the optimistically unchoke neighbor " + optimisticalId;
         Utilities.writeToFile(filename, context);
+        peer.optimistically_neighbor = optimisticalId;
     }
 
     DataOutputStream out = allOutStream.get(optimisticalId);

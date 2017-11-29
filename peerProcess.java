@@ -23,6 +23,9 @@ public class peerProcess {
     int port;  //my port number
     int numberOfPiece;
     int numberOfPeer;
+
+    int numberOfPieceIhave = 0;
+
     int filesize;
 
 

@@ -247,10 +247,9 @@ private static Lock lock = new ReentrantLock();
     byte [] myBitfieldMap = peer.bitfieldMap.get(peer.peerId);
     int numberOfPiece = peer.numberOfPiece;
 
-    boolean completeFile = Utilities.checkForCompelteFile(myBitfieldMap, numberOfPiece);
-
-    if(completeFile){
-        //System.out.println("Peer" + peer.peerId + " : I have complete file");
+    //boolean completeFile = Utilities.checkForCompelteFile(myBitfieldMap, numberOfPiece);
+    if(peer.numberOfPieceIhave == numberOfPiece){
+      System.out.println("COMPLETE FILE");
     }
     else{
         int desiredIndex = getDesiredIndex(myBitfieldMap, neighborBitfieldMap);
@@ -442,8 +441,7 @@ private static Lock lock = new ReentrantLock();
     }
   }
 
-  public synchronized byte[] updateBitfield(int peerId, int indexOfPiece){
-      lock.lock();
+  public byte[] updateBitfield(int peerId, int indexOfPiece){
 
        /*if(peerId == peer.peerId){
        String filename = "./peer_" + peer.peerId + "/log_peer_" + peer.peerId + ".log";
@@ -456,7 +454,6 @@ private static Lock lock = new ReentrantLock();
         Utilities.setBitInBitfield(myBitfieldMap, indexOfPiece); /*update bitfield*/
         peer.bitfieldMap.put(peerId, myBitfieldMap); /*Store the bitfield back to hashmap*/
 
-      lock.unlock();
     
         return  myBitfieldMap;
   }
@@ -495,15 +492,18 @@ private static Lock lock = new ReentrantLock();
 
         byte [] myBitfieldMap;
         boolean completeFile = false;
+
         synchronized(this){
-          lock.lock();
 
           myBitfieldMap = updateBitfield(peer.peerId, indexOfPiece);
-          completeFile = Utilities.checkForCompelteFile(myBitfieldMap, numberOfPiece);
 
-          lock.unlock();
+          //completeFile = Utilities.checkForCompelteFile(myBitfieldMap, numberOfPiece);
+          peer.numberOfPieceIhave++;
+
+          if(peer.numberOfPieceIhave == peer.numberOfPiece)
+            completeFile = true;
+
         }
-
         /*send a have message to all my neighbor*/
         message haveMsg = (new message()).have(indexOfPiece); /*create a message object*/
 
